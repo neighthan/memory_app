@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Memory</string>
+    <string name="title_memory_detail">Memory Detail</string>
+</resources>
