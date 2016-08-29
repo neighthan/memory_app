@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.design.widget.FloatingActionButton;
@@ -29,6 +28,7 @@ import java.util.List;
  * item details side-by-side using two vertical panes.
  */
 public class MemoryListActivity extends AppCompatActivity {
+    private static final String MEMORIES_FILE_NAME = "memories.csv";
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -49,7 +49,7 @@ public class MemoryListActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Lead to an activity to create a new memory (remember to save to .csv!)", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
@@ -68,16 +68,15 @@ public class MemoryListActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DummyContent.ITEMS));
+        recyclerView.setAdapter(new MemoryRecyclerViewAdapter(Memory.getAllMemories(this, MEMORIES_FILE_NAME)));
     }
 
-    public class SimpleItemRecyclerViewAdapter
-            extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
+    public class MemoryRecyclerViewAdapter extends RecyclerView.Adapter<MemoryRecyclerViewAdapter.ViewHolder> {
 
-        private final List<DummyContent.DummyItem> mValues;
+        private final List<Memory> memories;
 
-        public SimpleItemRecyclerViewAdapter(List<DummyContent.DummyItem> items) {
-            mValues = items;
+        public MemoryRecyclerViewAdapter(List<Memory> memories) {
+            this.memories = memories;
         }
 
         @Override
@@ -89,16 +88,16 @@ public class MemoryListActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
-            holder.mItem = mValues.get(position);
-            holder.mIdView.setText(mValues.get(position).id);
-            holder.mContentView.setText(mValues.get(position).content);
+            holder.memory = memories.get(position);
+            holder.mIdView.setText(memories.get(position).date().toString());
+            holder.mContentView.setText(memories.get(position).text());
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (mTwoPane) {
                         Bundle arguments = new Bundle();
-                        arguments.putString(MemoryDetailFragment.ARG_ITEM_ID, holder.mItem.id);
+                        arguments.putString(MemoryDetailFragment.ARG_ITEM_ID, holder.memory.id);
                         MemoryDetailFragment fragment = new MemoryDetailFragment();
                         fragment.setArguments(arguments);
                         getSupportFragmentManager().beginTransaction()
@@ -107,7 +106,7 @@ public class MemoryListActivity extends AppCompatActivity {
                     } else {
                         Context context = v.getContext();
                         Intent intent = new Intent(context, MemoryDetailActivity.class);
-                        intent.putExtra(MemoryDetailFragment.ARG_ITEM_ID, holder.mItem.id);
+                        intent.putExtra(MemoryDetailFragment.ARG_ITEM_ID, holder.memory.id);
 
                         context.startActivity(intent);
                     }
@@ -117,14 +116,14 @@ public class MemoryListActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return mValues.size();
+            return memories.size();
         }
 
         public class ViewHolder extends RecyclerView.ViewHolder {
             public final View mView;
             public final TextView mIdView;
             public final TextView mContentView;
-            public DummyContent.DummyItem mItem;
+            public Memory memory;
 
             public ViewHolder(View view) {
                 super(view);
