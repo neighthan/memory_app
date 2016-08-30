@@ -28,7 +28,8 @@ import java.util.List;
  * item details side-by-side using two vertical panes.
  */
 public class MemoryListActivity extends AppCompatActivity {
-    private static final String MEMORIES_FILE_NAME = "memories.csv";
+    public static final String MEMORIES_FILE_NAME = "memories.csv";
+    public static final String APP_TAG = "Memory";
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -44,15 +45,6 @@ public class MemoryListActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Lead to an activity to create a new memory (remember to save to .csv!)", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         View recyclerView = findViewById(R.id.memory_list);
         assert recyclerView != null;
@@ -89,7 +81,7 @@ public class MemoryListActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             holder.memory = memories.get(position);
-            holder.mIdView.setText(memories.get(position).date().toString());
+            holder.mIdView.setText(memories.get(position).dateString());
             holder.mContentView.setText(memories.get(position).text());
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -137,5 +129,10 @@ public class MemoryListActivity extends AppCompatActivity {
                 return super.toString() + " '" + mContentView.getText() + "'";
             }
         }
+    }
+
+    public void addMemory(View view) {
+        final Intent intent = new Intent(this, AddMemory.class);
+        startActivity(intent);
     }
 }

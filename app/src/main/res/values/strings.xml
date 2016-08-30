@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">Memory</string>
     <string name="title_memory_detail">Memory Detail</string>
+    <string name="title_activity_add_memory">AddMemory</string>
+    <string name="date">Date</string>
+    <string name="tags">Tags</string>
+    <string name="memory">Memory</string>
+    <string name="tags_hint">Comma-separated tags</string>
+    <string name="createMemory">Create Memory</string>
+    <string name="dateError">Error! Please enter a valid date.</string>
+    <string name="emptyMemoryError">Cannot create empty memory.</string>
 </resources>

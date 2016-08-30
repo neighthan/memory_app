@@ -27,6 +27,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="neighthan.memory.MemoryListActivity" />
         </activity>
+        <activity
+            android:name=".AddMemory"
+            android:label="@string/title_activity_add_memory"
+            android:parentActivityName=".MemoryListActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="neighthan.memory.MemoryListActivity" />
+        </activity>
     </application>
 
 </manifest>
