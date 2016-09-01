@@ -41,7 +41,7 @@ public class AddMemory extends AppCompatActivity {
             getSupportActionBar().setTitle("Add Memory");
 
             EditText dateText = (EditText) findViewById(R.id.dateText);
-            dateText.setText(Memory.DF.format(new Date()));
+            dateText.setText(Memory.FILE_DF.format(new Date()));
         }
 
 
@@ -57,7 +57,7 @@ public class AddMemory extends AppCompatActivity {
             // Process input texts to ensure all are valid
             String dateString = dateText.getText().toString().trim();
             Log.d(Constants.LOG_TAG, dateString);
-            Memory.DF.parse(dateString); // ensure valid date
+            Memory.FILE_DF.parse(dateString); // ensure valid date
 
             String tagsString = tagsText.getText().toString().trim().replace("\n", Memory.TAG_DELIM).replace(Memory.DELIM, "");
 
@@ -65,19 +65,18 @@ public class AddMemory extends AppCompatActivity {
             // Replace newlines with a dummy sequence that can then be swapped out once the memory is
             // read from the file
             String memoryString = memoryText.getText().toString().trim().replace(Memory.DELIM, "").replace("\n", Memory.DUMMY_NEWLINE);
-
             if (memoryString.length() == 0) {
                 throw new IllegalArgumentException();
             }
 
-            String memory = dateString + Memory.DELIM + tagsString + Memory.DELIM + memoryString + "\n";
-            toMemoriesFile.write(memory);
-            toMemoriesFile.flush();
-            Log.d(Constants.LOG_TAG, "Wrote memory: " + memory);
+            memoryString = dateString + Memory.DELIM + tagsString + Memory.DELIM + memoryString;
+            toMemoriesFile.write(memoryString + "\n");
+
+            Memory memory = new Memory(memoryString);
+            Log.d(Constants.LOG_TAG, "Created memory: " + memory);
+            Memory.memories.add(memory);
 
             finish();
-            // todo find a way to go back/up instead of doing this (make sure you don't read the
-            // whole memory list again); add the new memory explicitly to the list
         } catch (java.io.IOException e) {
             Log.d(Constants.LOG_TAG, "Invalid date!");
             e.printStackTrace();
@@ -88,6 +87,4 @@ public class AddMemory extends AppCompatActivity {
             Snackbar.make(findViewById(R.id.addMemoryLayout), R.string.emptyMemoryError, Snackbar.LENGTH_LONG).show();
         }
     }
-
-
 }

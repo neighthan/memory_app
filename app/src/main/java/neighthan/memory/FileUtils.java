@@ -15,13 +15,18 @@ public class FileUtils {
     private static final String TMP_FILE_NAME = "tmpFile.csv";
 
     public static void deleteRow(Context ctx, String fileName, String toDelete) {
-        Log.d(Constants.LOG_TAG, "Deleting " + toDelete + " from " + fileName);
+        boolean successful = false;
+        Log.d(Constants.LOG_TAG, "Deleting <" + toDelete + "> from " + fileName);
         try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(ctx.openFileInput(fileName)));
              BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(ctx.openFileOutput(TMP_FILE_NAME, Context.MODE_PRIVATE)))) {
             String line;
             while ((line = fileReader.readLine()) != null) {
+                if (line.equals(toDelete)) {
+                    Log.d(Constants.LOG_TAG, "Deleting: " + line);
+                    successful = true;
+                    continue;
+                }
                 Log.d(Constants.LOG_TAG, line);
-                if (line.equals(toDelete)) { continue; }
 
                 fileWriter.write(line);
                 fileWriter.newLine();
@@ -30,10 +35,11 @@ public class FileUtils {
         } catch (java.io.IOException e) {
             Log.e(Constants.LOG_TAG, "Error deleting row.", e);
         }
-        boolean successful = ctx.getFileStreamPath(TMP_FILE_NAME).renameTo(ctx.getFileStreamPath(fileName));
-        Log.d(Constants.LOG_TAG, toDelete + " deleted successfully? " + successful);
+        successful = successful && ctx.getFileStreamPath(TMP_FILE_NAME).renameTo(ctx.getFileStreamPath(fileName));
+        Log.d(Constants.LOG_TAG, "<" + toDelete + "> deleted successfully? " + successful);
     }
 
+    @SuppressWarnings("unused")
     public static void updateFile(Context ctx, String fileName) {
         Log.d(Constants.LOG_TAG, "Updating " + fileName);
         try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(ctx.openFileInput(fileName)));

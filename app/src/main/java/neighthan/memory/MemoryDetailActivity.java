@@ -3,6 +3,9 @@ package neighthan.memory;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
@@ -56,27 +59,41 @@ public class MemoryDetailActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            // This ID represents the Home or Up button. In the case of this
-            // activity, the Up button is shown. For
-            // more details, see the Navigation pattern on Android Design:
-            //
-            // http://developer.android.com/design/patterns/navigation.html#up-vs-back
-            //
-            navigateUpTo(new Intent(this, MemoryListActivity.class));
-            return true;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                // This ID represents the Home or Up button. In the case of this
+                // activity, the Up button is shown. For
+                // more details, see the Navigation pattern on Android Design:
+                //
+                // http://developer.android.com/design/patterns/navigation.html#up-vs-back
+                //
+                navigateUpTo(new Intent(this, MemoryListActivity.class));
+                return true;
+            case R.id.action_delete:
+                FileUtils.deleteRow(this, Constants.MEMORIES_FILE_NAME, Memory.memories.get(memoryId).toString());
+                Memory.memories.remove(memoryId);
+                navigateUpTo(new Intent(this, MemoryListActivity.class));
+                return true;
+            default:
+                Log.d(Constants.LOG_TAG, "Unknown menu item was clicked in AddMemory (did you " +
+                        "forget to add an id?)");
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     public void editMemory(View view) {
         Intent intent = new Intent(this, AddMemory.class);
-        // todo get the right data to pass
         Memory memory = Memory.memories.get(memoryId);
         intent.putExtra(Memory.DATE_EXTRA, memory.dateString());
         intent.putExtra(Memory.TAGS_EXTRA, memory.tagsString());
         intent.putExtra(Memory.TEXT_EXTRA, memory.text());
         startActivity(intent);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.memory_detail, menu);
+        return true;
     }
 }

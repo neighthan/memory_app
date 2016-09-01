@@ -9,4 +9,5 @@
     <string name="createMemory">Create Memory</string>
     <string name="dateError">Error! Please enter a valid date.</string>
     <string name="emptyMemoryError">Cannot create empty memory.</string>
+    <string name="action_delete">Delete</string>
 </resources>
