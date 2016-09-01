@@ -7,15 +7,10 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
-
-import neighthan.memory.dummy.DummyContent;
 
 import java.util.List;
 
@@ -28,8 +23,6 @@ import java.util.List;
  * item details side-by-side using two vertical panes.
  */
 public class MemoryListActivity extends AppCompatActivity {
-    public static final String MEMORIES_FILE_NAME = "memories.csv";
-    public static final String APP_TAG = "Memory";
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -41,6 +34,11 @@ public class MemoryListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_memory_list);
+
+//        FileUtils.updateFile(this, MEMORIES_FILE_NAME); // todo how to have a flag to run this only once,
+        // then not again until another update where it is needed? Can write the flag to a local file,
+        // check it each time the app is loaded; if true, update then set flag to false. But how do
+        // we set it to true each time a new "version" is released where an update is required?
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -60,7 +58,7 @@ public class MemoryListActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new MemoryRecyclerViewAdapter(Memory.getAllMemories(this, MEMORIES_FILE_NAME)));
+        recyclerView.setAdapter(new MemoryRecyclerViewAdapter(Memory.getAllMemories(this, Constants.MEMORIES_FILE_NAME)));
     }
 
     public class MemoryRecyclerViewAdapter extends RecyclerView.Adapter<MemoryRecyclerViewAdapter.ViewHolder> {
@@ -89,7 +87,7 @@ public class MemoryListActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     if (mTwoPane) {
                         Bundle arguments = new Bundle();
-                        arguments.putString(MemoryDetailFragment.ARG_ITEM_ID, holder.memory.id);
+                        arguments.putInt(MemoryDetailFragment.ARG_ITEM_ID, holder.memory.id);
                         MemoryDetailFragment fragment = new MemoryDetailFragment();
                         fragment.setArguments(arguments);
                         getSupportFragmentManager().beginTransaction()

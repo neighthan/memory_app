@@ -4,13 +4,12 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -18,12 +17,25 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/*
+TODO
+  - Fix updating the files in FileUtil (the renaming is failing)
+  - Ensure that tags are displayed correctly in editing view (now that delimiter is <~>)
+  - Add option to delete memories
+  - Add searching
+  - Add exporting / sharing of memories file
+ */
+
+
 /**
  *
  */
 public class Memory {
-    public static final String DELIM = "<*>";
+    public static final String DELIM = "<~>";
     public static final String TAG_DELIM = ",";
+    public static final String DATE_EXTRA = "dateExtra";
+    public static final String TAGS_EXTRA = "tagsExtra";
+    public static final String TEXT_EXTRA = "textExtra";
     public static final String DUMMY_NEWLINE = "%newline%";
     public static final SimpleDateFormat DF = new SimpleDateFormat("M-d h:mm a", Locale.US);
 
@@ -32,27 +44,30 @@ public class Memory {
     private Date date;
     private Set<String> tags;
     private String text;
-    public String id;
+    public int id;
 
     public static List<Memory> getAllMemories(Context ctx, String fileName) {
+        if (memories != null) { return memories; }
+        
         memories = new ArrayList<>();
         try(BufferedReader memoryReader = new BufferedReader(new InputStreamReader(ctx.openFileInput(fileName)))) {
             String line;
             int i = 0;
             while ((line = memoryReader.readLine()) != null) {
-                Log.d(MemoryListActivity.APP_TAG, "Loading memory " + i + ": " + line);
+                Log.d(Constants.LOG_TAG, "Loading memory " + i + ": " + line);
                 String[] splits = line.split(DELIM);
-                Memory memory = new Memory(splits[0], splits[1], splits[2], String.valueOf(i++));
+                Log.d(Constants.LOG_TAG, Arrays.toString(splits));
+                Memory memory = new Memory(splits[0], splits[1], splits[2], i++);
                 memories.add(memory);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Log.d(MemoryListActivity.APP_TAG, "Finished loading memories.");
+        Log.d(Constants.LOG_TAG, "Finished loading memories.");
         return memories;
     }
 
-    public Memory(String date, String tags, String text, String id) {
+    public Memory(String date, String tags, String text, int id) {
         this.tags = new HashSet<>();
         Collections.addAll(this.tags, tags.split(TAG_DELIM));
         this.text = text.replace(DUMMY_NEWLINE, "\n");
@@ -74,6 +89,14 @@ public class Memory {
 
     public Set<String> tags() {
         return tags;
+    }
+
+    public String tagsString() {
+        StringBuilder tagsString = new StringBuilder();
+        for (String tag : tags) {
+            tagsString.append(tag).append(TAG_DELIM);
+        }
+        return tagsString.substring(0, tagsString.length() - TAG_DELIM.length());
     }
 
     public String text() {

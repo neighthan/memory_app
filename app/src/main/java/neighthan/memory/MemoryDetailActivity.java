@@ -2,8 +2,6 @@ package neighthan.memory;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.support.v7.app.AppCompatActivity;
@@ -18,21 +16,14 @@ import android.view.MenuItem;
  */
 public class MemoryDetailActivity extends AppCompatActivity {
 
+    private int memoryId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_memory_detail);
         Toolbar toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own detail action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         // Show the Up button in the action bar.
         ActionBar actionBar = getSupportActionBar();
@@ -52,9 +43,9 @@ public class MemoryDetailActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
+            memoryId = getIntent().getIntExtra(MemoryDetailFragment.ARG_ITEM_ID, -1);
             Bundle arguments = new Bundle();
-            arguments.putString(MemoryDetailFragment.ARG_ITEM_ID,
-                    getIntent().getStringExtra(MemoryDetailFragment.ARG_ITEM_ID));
+            arguments.putInt(MemoryDetailFragment.ARG_ITEM_ID, memoryId);
             MemoryDetailFragment fragment = new MemoryDetailFragment();
             fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
@@ -77,5 +68,15 @@ public class MemoryDetailActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void editMemory(View view) {
+        Intent intent = new Intent(this, AddMemory.class);
+        // todo get the right data to pass
+        Memory memory = Memory.memories.get(memoryId);
+        intent.putExtra(Memory.DATE_EXTRA, memory.dateString());
+        intent.putExtra(Memory.TAGS_EXTRA, memory.tagsString());
+        intent.putExtra(Memory.TEXT_EXTRA, memory.text());
+        startActivity(intent);
     }
 }
