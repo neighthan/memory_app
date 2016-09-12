@@ -16,8 +16,6 @@ import java.util.Locale;
 
 /*
 TODO
-  - Add confirmation before deleting
-   (- Make confirmation turn-off-able in settings)
   - Add searching
   - Add exporting / sharing of memories file
 
