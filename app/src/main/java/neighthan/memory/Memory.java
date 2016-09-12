@@ -18,6 +18,7 @@ import java.util.Locale;
 TODO
   - Add searching
   - Add exporting / sharing of memories file
+  - Change title in detail view
 
 
 

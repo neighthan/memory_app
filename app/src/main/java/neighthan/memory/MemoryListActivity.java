@@ -12,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -30,6 +29,8 @@ public class MemoryListActivity extends AppCompatActivity {
      * device.
      */
     private boolean mTwoPane;
+    private static final int MEMORY_TEXT_LENGTH = 55; // todo set this based on the screen width
+    private static final int TAGS_TEXT_LENGTH = 10;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,10 +51,8 @@ public class MemoryListActivity extends AppCompatActivity {
         setupRecyclerView((RecyclerView) recyclerView);
 
         if (findViewById(R.id.memory_detail_container) != null) {
-            // The detail container view will be present only in the
-            // large-screen layouts (res/values-w900dp).
-            // If this view is present, then the
-            // activity should be in two-pane mode.
+            // The detail container view will be present only in the large-screen layouts (res/values-w900dp).
+            // If this view is present, then the activity should be in two-pane mode.
             mTwoPane = true;
         }
     }
@@ -80,8 +79,11 @@ public class MemoryListActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             holder.memory = memories.get(position);
-            holder.mIdView.setText(memories.get(position).dateString());
-            holder.mContentView.setText(memories.get(position).text());
+            // show only the date (not time of day) and truncate tags and memory text
+            holder.mIdView.setText(holder.memory.dateString().split(" ")[0] + "\n" +
+                    holder.memory.tagsString().substring(0, Math.min(TAGS_TEXT_LENGTH, holder.memory.tagsString().length())));
+            holder.mContentView.setText(holder.memory.text()
+                    .substring(0, Math.min(MEMORY_TEXT_LENGTH, holder.memory.text().length())));
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
