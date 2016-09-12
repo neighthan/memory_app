@@ -28,8 +28,7 @@ public class MemoryDetailFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public MemoryDetailFragment() {
-    }
+    public MemoryDetailFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,7 +38,7 @@ public class MemoryDetailFragment extends Fragment {
             // Load the dummy content specified by the fragment
             // arguments. In a real-world scenario, use a Loader
             // to load content from a content provider.
-            memory = Memory.memories.get(getArguments().getInt(ARG_ITEM_ID));
+            memory = Memory.getMemory(getArguments().getInt(ARG_ITEM_ID));
 
             Activity activity = this.getActivity();
             CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);

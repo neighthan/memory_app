@@ -9,18 +9,15 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 /*
 TODO
-  - Editing should remove old memory and replace with new one (instead of having both)
-    - should also return you to the master screen not the detail screen?
   - Add confirmation before deleting
    (- Make confirmation turn-off-able in settings)
-  - test multi-line memory
   - Add searching
   - Add exporting / sharing of memories file
 
@@ -39,18 +36,18 @@ public class Memory {
     public static final String DATE_EXTRA = "dateExtra";
     public static final String TAGS_EXTRA = "tagsExtra";
     public static final String TEXT_EXTRA = "textExtra";
+    public static final String ID_EXTA = "idExtra";
     public static final String DUMMY_NEWLINE = "%newline%";
-    public static final SimpleDateFormat FILE_DF = new SimpleDateFormat("M-d h:mm a", Locale.US); // todo
-    public static final SimpleDateFormat DISPLAY_DF = new SimpleDateFormat("M-d h:mm a", Locale.US);
+    public static final SimpleDateFormat DF = new SimpleDateFormat("M-d-yy h:mm a", Locale.US);
 
     private static int nextId;
 
-    public static List<Memory> memories;
+    private static List<Memory> memories;
 
     private Date date;
     private List<String> tags;
     private String text;
-    public int id;
+    private int id;
 
     public static List<Memory> getAllMemories(Context ctx, String fileName) {
         if (memories != null) { return memories; }
@@ -70,7 +67,23 @@ public class Memory {
             e.printStackTrace();
         }
         Log.d(Constants.LOG_TAG, "Finished loading memories.");
-        return memories;
+        return Collections.unmodifiableList(memories);
+    }
+
+    public static void removeMemory(int memoryId) {
+        memories.remove(memoryId);
+        // update IDs of all memories after this one to be their new list index
+        for (int i = memoryId; i < memories.size(); i++) {
+            memories.get(i).id = i;
+        }
+    }
+
+    public static void addMemory(Memory memory) {
+        memories.add(memory);
+    }
+
+    public static Memory getMemory(int id) {
+        return memories.get(id);
     }
 
     public Memory(String memoryString) {
@@ -91,7 +104,7 @@ public class Memory {
         this.text = text.replace(DUMMY_NEWLINE, "\n");
         this.id = id;
         try {
-            this.date = FILE_DF.parse(date);
+            this.date = DF.parse(date);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -102,7 +115,7 @@ public class Memory {
     }
 
     public String dateString() {
-        return FILE_DF.format(date);
+        return DF.format(date);
     }
 
     public List<String> tags() {
@@ -119,6 +132,10 @@ public class Memory {
 
     public String text() {
         return text;
+    }
+
+    public int id() {
+        return id;
     }
 
     @Override

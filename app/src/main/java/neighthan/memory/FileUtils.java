@@ -22,11 +22,11 @@ public class FileUtils {
             String line;
             while ((line = fileReader.readLine()) != null) {
                 if (line.equals(toDelete)) {
-                    Log.d(Constants.LOG_TAG, "Deleting: " + line);
+//                    Log.d(Constants.LOG_TAG, "Deleting: " + line);
                     successful = true;
                     continue;
                 }
-                Log.d(Constants.LOG_TAG, line);
+//                Log.d(Constants.LOG_TAG, line);
 
                 fileWriter.write(line);
                 fileWriter.newLine();

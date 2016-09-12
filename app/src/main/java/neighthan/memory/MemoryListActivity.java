@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -87,7 +88,7 @@ public class MemoryListActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     if (mTwoPane) {
                         Bundle arguments = new Bundle();
-                        arguments.putInt(MemoryDetailFragment.ARG_ITEM_ID, holder.memory.id);
+                        arguments.putInt(MemoryDetailFragment.ARG_ITEM_ID, holder.memory.id());
                         MemoryDetailFragment fragment = new MemoryDetailFragment();
                         fragment.setArguments(arguments);
                         getSupportFragmentManager().beginTransaction()
@@ -96,7 +97,7 @@ public class MemoryListActivity extends AppCompatActivity {
                     } else {
                         Context context = v.getContext();
                         Intent intent = new Intent(context, MemoryDetailActivity.class);
-                        intent.putExtra(MemoryDetailFragment.ARG_ITEM_ID, holder.memory.id);
+                        intent.putExtra(MemoryDetailFragment.ARG_ITEM_ID, holder.memory.id());
 
                         context.startActivity(intent);
                     }

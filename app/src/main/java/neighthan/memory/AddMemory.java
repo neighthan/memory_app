@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
 import java.io.OutputStreamWriter;
@@ -14,6 +15,10 @@ import java.text.ParseException;
 import java.util.Date;
 
 public class AddMemory extends AppCompatActivity {
+    private static final String EDIT_ACTION_BAR_TITLE = "Edit Memory";
+    private static final String ADD_ACTION_BAR_TITLE = "Add Memory";
+    private static int editedMemoryId = -1;
+    // not sure of a better way to save this information between onCreate and createMemory
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +30,8 @@ public class AddMemory extends AppCompatActivity {
 
         Intent intent = getIntent(); // with which this activity was started
         if (intent.hasExtra(Memory.DATE_EXTRA)) { // started from edit memory button
-            getSupportActionBar().setTitle("Edit Memory");
+            getSupportActionBar().setTitle(EDIT_ACTION_BAR_TITLE);
+            ((Button) findViewById(R.id.createMemoryButton)).setText(R.string.edit_memory_button);
 
             EditText dateText = (EditText) findViewById(R.id.dateText);
             EditText memoryText = (EditText) findViewById(R.id.memoryText);
@@ -34,14 +40,12 @@ public class AddMemory extends AppCompatActivity {
             dateText.setText(intent.getStringExtra(Memory.DATE_EXTRA));
             memoryText.setText(intent.getStringExtra(Memory.TEXT_EXTRA));
             tagsText.setText(intent.getStringExtra(Memory.TAGS_EXTRA));
-            // todo delete old memory when you create a new one if you were editing
-            // (probably change the function when you press "Create"; so don't set it in the layout,
-            // get the button and set the onClick function programmatically
+            editedMemoryId = intent.getIntExtra(Memory.ID_EXTA, -1);
         } else {
-            getSupportActionBar().setTitle("Add Memory");
-
+            getSupportActionBar().setTitle(ADD_ACTION_BAR_TITLE);
+            ((Button) findViewById(R.id.createMemoryButton)).setText(R.string.create_memory_button);
             EditText dateText = (EditText) findViewById(R.id.dateText);
-            dateText.setText(Memory.FILE_DF.format(new Date()));
+            dateText.setText(Memory.DF.format(new Date()));
         }
 
 
@@ -57,7 +61,7 @@ public class AddMemory extends AppCompatActivity {
             // Process input texts to ensure all are valid
             String dateString = dateText.getText().toString().trim();
             Log.d(Constants.LOG_TAG, dateString);
-            Memory.FILE_DF.parse(dateString); // ensure valid date
+            Memory.DF.parse(dateString); // ensure valid date
 
             String tagsString = tagsText.getText().toString().trim().replace("\n", Memory.TAG_DELIM).replace(Memory.DELIM, "");
 
@@ -74,15 +78,18 @@ public class AddMemory extends AppCompatActivity {
 
             Memory memory = new Memory(memoryString);
             Log.d(Constants.LOG_TAG, "Created memory: " + memory);
-            Memory.memories.add(memory);
+            Memory.addMemory(memory);
 
-            finish();
+            if (getSupportActionBar().getTitle().equals(EDIT_ACTION_BAR_TITLE)) {
+                FileUtils.deleteRow(this, Constants.MEMORIES_FILE_NAME, Memory.getMemory(editedMemoryId).toString());
+                Memory.removeMemory(editedMemoryId);
+            }
+
+            navigateUpTo(new Intent(this, MemoryListActivity.class));
         } catch (java.io.IOException e) {
-            Log.d(Constants.LOG_TAG, "Invalid date!");
             e.printStackTrace();
         } catch (ParseException e) {
             Snackbar.make(findViewById(R.id.addMemoryLayout), R.string.dateError, Snackbar.LENGTH_LONG).show();
-            // todo make a more helpful dateError message (show format acceptable)
         } catch (IllegalArgumentException e) {
             Snackbar.make(findViewById(R.id.addMemoryLayout), R.string.emptyMemoryError, Snackbar.LENGTH_LONG).show();
         }

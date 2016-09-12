@@ -70,8 +70,8 @@ public class MemoryDetailActivity extends AppCompatActivity {
                 navigateUpTo(new Intent(this, MemoryListActivity.class));
                 return true;
             case R.id.action_delete:
-                FileUtils.deleteRow(this, Constants.MEMORIES_FILE_NAME, Memory.memories.get(memoryId).toString());
-                Memory.memories.remove(memoryId);
+                FileUtils.deleteRow(this, Constants.MEMORIES_FILE_NAME, Memory.getMemory(memoryId).toString());
+                Memory.removeMemory(memoryId);
                 navigateUpTo(new Intent(this, MemoryListActivity.class));
                 return true;
             default:
@@ -83,10 +83,11 @@ public class MemoryDetailActivity extends AppCompatActivity {
 
     public void editMemory(View view) {
         Intent intent = new Intent(this, AddMemory.class);
-        Memory memory = Memory.memories.get(memoryId);
+        Memory memory = Memory.getMemory(memoryId);
         intent.putExtra(Memory.DATE_EXTRA, memory.dateString());
         intent.putExtra(Memory.TAGS_EXTRA, memory.tagsString());
         intent.putExtra(Memory.TEXT_EXTRA, memory.text());
+        intent.putExtra(Memory.ID_EXTA, memoryId);
         startActivity(intent);
     }
 
