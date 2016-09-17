@@ -2,6 +2,7 @@ package neighthan.memory;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -10,6 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.text.ParseException;
 import java.util.Date;
@@ -48,12 +51,12 @@ public class AddMemory extends AppCompatActivity {
             dateText.setText(Memory.DF.format(new Date()));
         }
 
-
     }
 
     public void createMemory(View view) {
-        try(OutputStreamWriter toMemoriesFile = new OutputStreamWriter(
-                openFileOutput(Constants.MEMORIES_FILE_NAME, MODE_APPEND))) {
+//        OutputStreamWriter toMemoriesFile = new OutputStreamWriter(
+//                openFileOutput(Constants.MEMORIES_FILE_NAME, MODE_APPEND))
+        try(FileWriter toMemoriesFile = new FileWriter(Constants.MEMORIES_FILE, true)) { // append
             EditText dateText = (EditText) findViewById(R.id.dateText);
             EditText tagsText = (EditText) findViewById(R.id.tagsText);
             EditText memoryText = (EditText) findViewById(R.id.memoryText);
@@ -81,12 +84,13 @@ public class AddMemory extends AppCompatActivity {
             Memory.addMemory(memory);
 
             if (getSupportActionBar().getTitle().equals(EDIT_ACTION_BAR_TITLE)) {
-                FileUtils.deleteRow(this, Constants.MEMORIES_FILE_NAME, Memory.getMemory(editedMemoryId).toString());
+                FileUtils.deleteRow(this, Memory.getMemory(editedMemoryId).toString());
                 Memory.removeMemory(editedMemoryId);
             }
 
             navigateUpTo(new Intent(this, MemoryListActivity.class));
         } catch (java.io.IOException e) {
+            Log.d(Constants.LOG_TAG, e.getStackTrace().toString());
             e.printStackTrace();
         } catch (ParseException e) {
             Snackbar.make(findViewById(R.id.addMemoryLayout), R.string.dateError, Snackbar.LENGTH_LONG).show();

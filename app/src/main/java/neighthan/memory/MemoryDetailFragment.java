@@ -41,10 +41,6 @@ public class MemoryDetailFragment extends Fragment {
             memory = Memory.getMemory(getArguments().getInt(ARG_ITEM_ID));
 
             Activity activity = this.getActivity();
-            CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
-            if (appBarLayout != null) {
-                appBarLayout.setTitle(memory.text()); // todo update detail title
-            }
         }
     }
 

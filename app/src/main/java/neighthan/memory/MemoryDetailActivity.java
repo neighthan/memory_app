@@ -3,6 +3,7 @@ package neighthan.memory;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -36,6 +37,13 @@ public class MemoryDetailActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
+        memoryId = getIntent().getIntExtra(MemoryDetailFragment.ARG_ITEM_ID, -1);
+
+        CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
+        if (appBarLayout != null) {
+            appBarLayout.setTitle(Memory.getMemory(memoryId).dateString());
+        }
+
         // savedInstanceState is non-null when there is fragment state
         // saved from previous configurations of this activity
         // (e.g. when rotating the screen from portrait to landscape).
@@ -48,7 +56,6 @@ public class MemoryDetailActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
-            memoryId = getIntent().getIntExtra(MemoryDetailFragment.ARG_ITEM_ID, -1);
             Bundle arguments = new Bundle();
             arguments.putInt(MemoryDetailFragment.ARG_ITEM_ID, memoryId);
             MemoryDetailFragment fragment = new MemoryDetailFragment();
@@ -90,7 +97,7 @@ public class MemoryDetailActivity extends AppCompatActivity {
     }
 
     private void deleteMemory(int memoryId) {
-        FileUtils.deleteRow(this, Constants.MEMORIES_FILE_NAME, Memory.getMemory(memoryId).toString());
+        FileUtils.deleteRow(this, Memory.getMemory(memoryId).toString());
         Memory.removeMemory(memoryId);
         navigateUpTo(new Intent(this, MemoryListActivity.class));
     }

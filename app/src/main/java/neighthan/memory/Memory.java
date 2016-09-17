@@ -4,8 +4,8 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -15,14 +15,23 @@ import java.util.List;
 import java.util.Locale;
 
 /*
-TODO
+TODO : Features
   - Add searching
-  - Add exporting / sharing of memories file
-  - Change title in detail view
+  https://developer.android.com/guide/topics/search/search-dialog.html
+  - sort memories by date
+  - Add exporting / sharing of memories file (partially done)
+  - show tags somewhere in detail view? maybe showable from a menu button?
 
 
 
   - Keep a local backup file (sync on, e.g., app opening); restore from this if there's an error
+
+TODO : BUGS
+   - creating a memory, editing it, then leaving the app causes the edited memory to disappear
+       (it isn't being written to the file but the old memory is being deleted)
+   - need to get target sdk back to 24 (have to figure out how to request storage permission)
+   - Adding a memory no longer works without external storage (set the value to false and try)
+   - Rotating in a detail view just shows the title "Memory Detail" instead of the date
  */
 
 
@@ -52,7 +61,8 @@ public class Memory {
         if (memories != null) { return memories; }
 
         memories = new ArrayList<>();
-        try(BufferedReader memoryReader = new BufferedReader(new InputStreamReader(ctx.openFileInput(fileName)))) {
+
+        try(BufferedReader memoryReader = new BufferedReader(new FileReader(Constants.MEMORIES_FILE))) {
             String line;
             int i = 0;
             while ((line = memoryReader.readLine()) != null) {
