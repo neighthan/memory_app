@@ -1,6 +1,6 @@
 package neighthan.memory;
 
-import android.content.Context;
+import android.support.v7.util.SortedList;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -16,22 +16,15 @@ import java.util.Locale;
 
 /*
 TODO : Features
-  - Add searching
-  https://developer.android.com/guide/topics/search/search-dialog.html
-  - sort memories by date
-  - Add exporting / sharing of memories file (partially done)
   - show tags somewhere in detail view? maybe showable from a menu button?
 
 
-
+  - use data binding : https://developer.android.com/topic/libraries/data-binding/index.html
   - Keep a local backup file (sync on, e.g., app opening); restore from this if there's an error
 
 TODO : BUGS
-   - creating a memory, editing it, then leaving the app causes the edited memory to disappear
-       (it isn't being written to the file but the old memory is being deleted)
    - need to get target sdk back to 24 (have to figure out how to request storage permission)
    - Adding a memory no longer works without external storage (set the value to false and try)
-   - Rotating in a detail view just shows the title "Memory Detail" instead of the date
  */
 
 
@@ -50,53 +43,114 @@ public class Memory {
 
     private static int nextId;
 
-    private static List<Memory> memories;
+    public static SortedList<Memory> memories; // this will be used for searching; some memories will
+    // be removed to fit the search, so we need a second list that always contains all of the memories
+
+    private static List<Memory> allMemories; // maintain memory.id == allMemories.indexOf(memory)
+    // and memory.id == row in memories file containing this memory
 
     private Date date;
     private List<String> tags;
     private String text;
     private int id;
 
-    public static List<Memory> getAllMemories(Context ctx, String fileName) {
-        if (memories != null) { return memories; }
+    /**
+     * Gives Memory a static reference to mems so that mems can be updated by the static methods
+     * of Memory.
+     * @param mems empty sorted list where memories for the RecyclerView should be stored
+     */
+    public static void setMemoriesList(SortedList<Memory> mems) {
+        memories = mems;
+    }
 
-        memories = new ArrayList<>();
+    /**
+     * @return an unmodifiable view of the list of all memories
+     */
+    public static List<Memory> getAllMemories(){
+        return Collections.unmodifiableList(allMemories);
+    }
 
+    /**
+     * Reads all memories in from the file specified in Constants.
+     * These memories are added to the list of all memories (returned by Memory.getAllMemories())
+     * and to the SortedList which is shown by the RecyclerView.
+     */
+    public static void addMemoriesFromFile() {
         try(BufferedReader memoryReader = new BufferedReader(new FileReader(Constants.MEMORIES_FILE))) {
+            allMemories = new ArrayList<>();
             String line;
             int i = 0;
             while ((line = memoryReader.readLine()) != null) {
                 Log.d(Constants.LOG_TAG, "Loading memory " + i + ": " + line);
                 String[] splits = line.split(DELIM);
                 Memory memory = new Memory(splits[0], splits[1], splits[2], i++);
-                memories.add(memory);
+                allMemories.add(memory);
             }
             nextId = i;
         } catch (IOException e) {
             e.printStackTrace();
         }
+        memories.addAll(allMemories);
         Log.d(Constants.LOG_TAG, "Finished loading memories.");
-        return Collections.unmodifiableList(memories);
     }
 
-    public static void removeMemory(int memoryId) {
-        memories.remove(memoryId);
-        // update IDs of all memories after this one to be their new list index
-        for (int i = memoryId; i < memories.size(); i++) {
-            memories.get(i).id = i;
-        }
-    }
-
-    public static void addMemory(Memory memory) {
+    //        OutputStreamWriter toMemoriesFile = new OutputStreamWriter(
+//                openFileOutput(Constants.MEMORIES_FILE_NAME, MODE_APPEND))
+    /**
+     * Creates a new memory: adds it to the file of memories, the list of all memories, and the
+     * list of shown memories.
+     * @param memoryString String representation of the Memory to be created
+     */
+    public static void createMemory(String memoryString) {
+        FileUtils.addRow(memoryString);
+        final Memory memory = new Memory(memoryString);
+        allMemories.add(memory);
         memories.add(memory);
     }
 
+    public static void editMemory(int id, String newMemoryString) {
+        FileUtils.editRow(id, newMemoryString);
+        allMemories.get(id).update(newMemoryString);
+    }
+
+    /**
+     * Deletes a memory - removes it from the RecyclerView's SortedList and from the list of all
+     * memories. It is also removed from the file where memories are saved.
+     * @param id of the memory to be deleted
+     */
+    public static void deleteMemory(int id) {
+        FileUtils.deleteRow(id);
+
+        Memory toDelete = allMemories.get(id);
+        memories.remove(toDelete);
+        allMemories.remove(toDelete);
+        for (int i = id; i < allMemories.size(); i++) { // shift id's to still be the index
+            allMemories.get(i).id = i;
+        }
+    }
+
+    public static void updateVisibleMemories(List<Memory> mems) {
+        memories.beginBatchedUpdates();
+        for (int i = memories.size() - 1; i >= 0; i--) {
+            final Memory memory = memories.get(i);
+            if (!mems.contains(memory)) {
+                memories.remove(memory);
+            }
+        }
+        memories.addAll(mems);
+        memories.endBatchedUpdates();
+    }
+
     public static Memory getMemory(int id) {
-        return memories.get(id);
+        return allMemories.get(id);
     }
 
     public Memory(String memoryString) {
-        this(memoryString.split(DELIM), nextId++);
+        this(memoryString, nextId++);
+    }
+
+    public Memory(String memoryString, int id) {
+        this(memoryString.split(DELIM), id);
     }
 
     public Memory(String[] fields, int id) {
@@ -104,19 +158,8 @@ public class Memory {
     }
 
     public Memory(String date, String tags, String text, int id) {
-        this.tags = new ArrayList<>(2);
-        for (String tag : tags.split(TAG_DELIM)) {
-            if (! this.tags.contains(tag)) {
-                this.tags.add(tag);
-            }
-        }
-        this.text = text.replace(DUMMY_NEWLINE, "\n");
         this.id = id;
-        try {
-            this.date = DF.parse(date);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        update(date, tags, text);
     }
 
     public Date date() {
@@ -147,8 +190,48 @@ public class Memory {
         return id;
     }
 
+    public void update(String newMemoryString) {
+        String[] splits = newMemoryString.split(DELIM);
+        update(splits[0], splits[1], splits[2]);
+    }
+
+    public void update(String date, String tags, String text) {
+        this.tags = new ArrayList<>(2);
+        for (String tag : tags.split(TAG_DELIM)) {
+            if (! this.tags.contains(tag)) {
+                this.tags.add(tag);
+            }
+        }
+        this.text = text.replace(DUMMY_NEWLINE, "\n");
+        try {
+            this.date = DF.parse(date);
+        } catch (ParseException e) {
+            Log.e(Constants.LOG_TAG, "Error parsing date when creating or updating memory", e);
+        }
+    }
+
     @Override
     public String toString() {
-        return dateString() + Memory.DELIM + tagsString() + Memory.DELIM + text;
+        return dateString() + DELIM + tagsString() + DELIM + text;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Memory memory = (Memory) o;
+
+        return id == memory.id && date.equals(memory.date) && tags.equals(memory.tags) && text.equals(memory.text);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = date.hashCode();
+        result = 31 * result + tags.hashCode();
+        result = 31 * result + text.hashCode();
+        result = 31 * result + id;
+        return result;
     }
 }

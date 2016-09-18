@@ -9,6 +9,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
@@ -17,33 +18,66 @@ import java.io.OutputStreamWriter;
  */
 public class FileUtils {
     private static final String TMP_FILE_NAME = "tmpFile.csv";
-    // todo make this work with local file too
+    // todo make this work with internal storage file too
     private static final File TMP_FILE = new File(Environment.getExternalStorageDirectory(), TMP_FILE_NAME);
 
-    public static void deleteRow(Context ctx, String toDelete) {
+    public static void addRow(String toAdd) {
+        try (FileWriter toMemoriesFile = new FileWriter(Constants.MEMORIES_FILE, true)) { // append mode
+            toMemoriesFile.write(toAdd + "\n");
+        } catch (IOException e) {
+            Log.e(Constants.LOG_TAG, "IOException in FileUtils::addRow", e);
+        }
+    }
+
+    public static void editRow(int rowToChange, String newMemoryString) {
         boolean successful = false;
-        Log.d(Constants.LOG_TAG, "Deleting <" + toDelete + "> from " + Constants.MEMORIES_FILE_NAME);
+        boolean editing = !newMemoryString.isEmpty();
+
+        if (editing) {
+            Log.d(Constants.LOG_TAG, "Editing row <" + rowToChange + "> from " + Constants.MEMORIES_FILE_NAME);
+        } else {
+            Log.d(Constants.LOG_TAG, "Deleting row <" + rowToChange + "> from " + Constants.MEMORIES_FILE_NAME);
+        }
+
         try (BufferedReader fileReader = new BufferedReader(new FileReader(Constants.MEMORIES_FILE));
              BufferedWriter fileWriter = new BufferedWriter(new FileWriter(TMP_FILE))) {
             String line;
+            int currentRow = 0;
             while ((line = fileReader.readLine()) != null) {
-                if (line.equals(toDelete)) {
-//                    Log.d(Constants.LOG_TAG, "Deleting: " + line);
+                if (currentRow == rowToChange) {
+                    if (editing) {
+                        fileWriter.write(newMemoryString);
+                        fileWriter.newLine();
+                    }
+                    // if deleting, we just don't write anything back for this row
                     successful = true;
                     continue;
+                } else {
+                    fileWriter.write(line);
+                    fileWriter.newLine();
                 }
-//                Log.d(Constants.LOG_TAG, line);
-
-                fileWriter.write(line);
-                fileWriter.newLine();
+                currentRow++;
             }
             fileWriter.flush();
-        } catch (java.io.IOException e) {
-            Log.e(Constants.LOG_TAG, "Error deleting row.", e);
+        } catch (IOException e) {
+            if (editing) {
+                Log.e(Constants.LOG_TAG, "Error editing row.", e);
+            } else {
+                Log.e(Constants.LOG_TAG, "Error deleting row.", e);
+            }
         }
-        
+
         successful = successful && TMP_FILE.renameTo(Constants.MEMORIES_FILE);
-        Log.d(Constants.LOG_TAG, "<" + toDelete + "> deleted successfully? " + successful);
+
+        if (editing) {
+            Log.d(Constants.LOG_TAG, "Row <" + rowToChange + "> edited successfully? " + successful);
+        } else {
+            Log.d(Constants.LOG_TAG, "Row <" + rowToChange + "> deleted successfully? " + successful);
+        }
+    }
+
+    public static void deleteRow(int rowToDelete) {
+        editRow(rowToDelete, "");
     }
 
     @SuppressWarnings("unused")

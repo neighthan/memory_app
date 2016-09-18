@@ -97,8 +97,7 @@ public class MemoryDetailActivity extends AppCompatActivity {
     }
 
     private void deleteMemory(int memoryId) {
-        FileUtils.deleteRow(this, Memory.getMemory(memoryId).toString());
-        Memory.removeMemory(memoryId);
+        Memory.deleteMemory(memoryId);
         navigateUpTo(new Intent(this, MemoryListActivity.class));
     }
 

@@ -54,9 +54,7 @@ public class AddMemory extends AppCompatActivity {
     }
 
     public void createMemory(View view) {
-//        OutputStreamWriter toMemoriesFile = new OutputStreamWriter(
-//                openFileOutput(Constants.MEMORIES_FILE_NAME, MODE_APPEND))
-        try(FileWriter toMemoriesFile = new FileWriter(Constants.MEMORIES_FILE, true)) { // append
+        try {
             EditText dateText = (EditText) findViewById(R.id.dateText);
             EditText tagsText = (EditText) findViewById(R.id.tagsText);
             EditText memoryText = (EditText) findViewById(R.id.memoryText);
@@ -71,27 +69,23 @@ public class AddMemory extends AppCompatActivity {
             // Each line denotes a separate memory, so one memory must all be contained in a single line
             // Replace newlines with a dummy sequence that can then be swapped out once the memory is
             // read from the file
-            String memoryString = memoryText.getText().toString().trim().replace(Memory.DELIM, "").replace("\n", Memory.DUMMY_NEWLINE);
-            if (memoryString.length() == 0) {
+            String text = memoryText.getText().toString().trim().replace(Memory.DELIM, "").replace("\n", Memory.DUMMY_NEWLINE);
+            if (text.length() == 0) {
                 throw new IllegalArgumentException();
             }
 
-            memoryString = dateString + Memory.DELIM + tagsString + Memory.DELIM + memoryString;
-            toMemoriesFile.write(memoryString + "\n");
+            final String memoryString = dateString + Memory.DELIM + tagsString + Memory.DELIM + text;
 
-            Memory memory = new Memory(memoryString);
-            Log.d(Constants.LOG_TAG, "Created memory: " + memory);
-            Memory.addMemory(memory);
 
-            if (getSupportActionBar().getTitle().equals(EDIT_ACTION_BAR_TITLE)) {
-                FileUtils.deleteRow(this, Memory.getMemory(editedMemoryId).toString());
-                Memory.removeMemory(editedMemoryId);
+            if (getSupportActionBar().getTitle().equals(EDIT_ACTION_BAR_TITLE)) { // editing existing memory
+                Memory.editMemory(editedMemoryId, memoryString);
+                Log.d(Constants.LOG_TAG, "Edited memory " + editedMemoryId + " to be " + memoryString);
+            } else { // adding a new memory
+                Memory.createMemory(memoryString);
+                Log.d(Constants.LOG_TAG, "Created memory: " + memoryString);
             }
 
             navigateUpTo(new Intent(this, MemoryListActivity.class));
-        } catch (java.io.IOException e) {
-            Log.d(Constants.LOG_TAG, e.getStackTrace().toString());
-            e.printStackTrace();
         } catch (ParseException e) {
             Snackbar.make(findViewById(R.id.addMemoryLayout), R.string.dateError, Snackbar.LENGTH_LONG).show();
         } catch (IllegalArgumentException e) {

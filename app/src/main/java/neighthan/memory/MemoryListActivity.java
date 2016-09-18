@@ -6,20 +6,22 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.FileProvider;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -30,7 +32,7 @@ import java.util.List;
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class MemoryListActivity extends AppCompatActivity {
+public class MemoryListActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -39,6 +41,7 @@ public class MemoryListActivity extends AppCompatActivity {
     private boolean mTwoPane;
     private static final int MEMORY_TEXT_LENGTH = 55; // todo set this based on the screen width
     private static final int TAGS_TEXT_LENGTH = 10;
+    private static RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,9 +57,10 @@ public class MemoryListActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        View recyclerView = findViewById(R.id.memory_list);
-        assert recyclerView != null;
-        setupRecyclerView((RecyclerView) recyclerView);
+        View view = findViewById(R.id.memory_list);
+        assert view != null;
+        recyclerView = (RecyclerView) view;
+        setupRecyclerView(recyclerView);
 
         if (findViewById(R.id.memory_detail_container) != null) {
             // The detail container view will be present only in the large-screen layouts (res/values-w900dp).
@@ -67,9 +71,41 @@ public class MemoryListActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.memory_list, menu);
+        getMenuInflater().inflate(R.menu.memory_list, menu);
+
+        final MenuItem searchItem = menu.findItem(R.id.action_search);
+        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        searchView.setOnQueryTextListener(this);
+
         return true;
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
+
+    @Override
+    /**
+     * This is called every time that the text in the search bar changes; thus we will get updates
+     * while typing to only show the matching memories. When one is done searching, the query is
+     * the empty String at the last change, so then all memories match and are added back again.
+     */
+    public boolean onQueryTextChange(String query) {
+        final List<Memory> filteredMemories = filter(Memory.getAllMemories(), query.toLowerCase());
+        Memory.updateVisibleMemories(filteredMemories);
+        recyclerView.scrollToPosition(0); // so you can see the memories better while searching
+        return true;
+    }
+
+    private List<Memory> filter(List<Memory> memories, String query) {
+        final List<Memory> filteredMemories = new ArrayList<>();
+        for (Memory memory : memories) {
+            if (memory.toString().toLowerCase().contains(query)) {
+                filteredMemories.add(memory);
+            }
+        }
+        return filteredMemories;
     }
 
     @Override
@@ -109,15 +145,73 @@ public class MemoryListActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new MemoryRecyclerViewAdapter(Memory.getAllMemories(this, Constants.MEMORIES_FILE_NAME)));
+        recyclerView.setAdapter(new MemoryRecyclerViewAdapter(this));
     }
 
     public class MemoryRecyclerViewAdapter extends RecyclerView.Adapter<MemoryRecyclerViewAdapter.ViewHolder> {
 
-        private final List<Memory> memories;
+        private final LayoutInflater inflater;
+        private final Comparator<Memory> DATE_ORDER = new Comparator<Memory>() {
+            @Override
+            public int compare(Memory mem1, Memory mem2) {
+                return mem1.date().compareTo(mem2.date());
+            }
+        };
 
-        public MemoryRecyclerViewAdapter(List<Memory> memories) {
-            this.memories = memories;
+        /* The sorted list is very useful with a recycler view; the callback will handle all of the
+        * notifications to the recycler view (to update the items shown). This works very well with
+        * using a search view too! You can update based on the query text.
+        */
+        private final SortedList<Memory> memories = new SortedList<Memory>(Memory.class, new SortedList.Callback<Memory>() {
+            @Override
+            public void onInserted(int position, int count) {
+                notifyItemRangeInserted(position, count);
+            }
+
+            @Override
+            public void onRemoved(int position, int count) {
+                notifyItemRangeRemoved(position, count);
+            }
+
+            @Override
+            public void onMoved(int fromPosition, int toPosition) {
+                notifyItemMoved(fromPosition, toPosition);
+            }
+
+            @Override
+            public int compare(Memory mem1, Memory mem2) {
+                return DATE_ORDER.compare(mem1, mem2);
+            }
+
+            @Override
+            public void onChanged(int position, int count) {
+                notifyItemRangeChanged(position, count);
+            }
+
+            @Override
+            /**
+             * This method is used to determine if two items represent the same memory.
+             * A sorted list will not add an item if it is already in the list (as determined by
+             * this method). Instead, it will check if the contents of the two items are the same
+             * (as determined by the below method). If not, it will update the list to contain the
+             * new item instead of the old one.
+             * Thus for editing a memory, you don't have to remove the old one and add the new one.
+             * Instead, add the new one, and the sorted list will see they are the same and update.
+             */
+            public boolean areItemsTheSame(Memory mem1, Memory mem2) {
+                return mem1.id() == mem2.id();
+            }
+
+            @Override
+            public boolean areContentsTheSame(Memory oldMem, Memory newMem) {
+                return oldMem.equals(newMem);
+            }
+        });
+
+        public MemoryRecyclerViewAdapter(Context ctx) {
+            this.inflater = LayoutInflater.from(ctx); // todo : is binding here needed?
+            Memory.setMemoriesList(memories); // so updates can be done through Memory's methods
+            Memory.addMemoriesFromFile();
         }
 
         @Override
