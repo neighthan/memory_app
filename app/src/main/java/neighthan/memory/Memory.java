@@ -16,11 +16,16 @@ import java.util.Locale;
 
 /*
 TODO : Features
+  - voice recording
   - show tags somewhere in detail view? maybe showable from a menu button?
+  - settings menu ( for what settings? )
+  - help menu (quick walk-through; especially things like tag: in the search bar)
 
 
   - use data binding : https://developer.android.com/topic/libraries/data-binding/index.html
   - Keep a local backup file (sync on, e.g., app opening); restore from this if there's an error
+
+    - pictures?
 
 TODO : BUGS
    - need to get target sdk back to 24 (have to figure out how to request storage permission)
@@ -76,6 +81,8 @@ public class Memory {
      * and to the SortedList which is shown by the RecyclerView.
      */
     public static void addMemoriesFromFile() {
+        if (allMemories != null) { return; }
+
         try(BufferedReader memoryReader = new BufferedReader(new FileReader(Constants.MEMORIES_FILE))) {
             allMemories = new ArrayList<>();
             String line;

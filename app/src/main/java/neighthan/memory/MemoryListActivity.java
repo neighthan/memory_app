@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -92,7 +93,9 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
      * the empty String at the last change, so then all memories match and are added back again.
      */
     public boolean onQueryTextChange(String query) {
-        final List<Memory> filteredMemories = filter(Memory.getAllMemories(), query.toLowerCase());
+        query = query.toLowerCase();
+        final List<Memory> filteredMemories = query.startsWith(Constants.QUERY_TAG_PREFIX) ?
+                filterTags(Memory.getAllMemories(), Arrays.asList(query.split(Memory.TAG_DELIM))) : filter(Memory.getAllMemories(), query);
         Memory.updateVisibleMemories(filteredMemories);
         recyclerView.scrollToPosition(0); // so you can see the memories better while searching
         return true;
@@ -102,6 +105,16 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
         final List<Memory> filteredMemories = new ArrayList<>();
         for (Memory memory : memories) {
             if (memory.toString().toLowerCase().contains(query)) {
+                filteredMemories.add(memory);
+            }
+        }
+        return filteredMemories;
+    }
+
+    private List<Memory> filterTags(List<Memory> memories, List<String> tags) {
+        final List<Memory> filteredMemories = new ArrayList<>();
+        for (Memory memory : memories) {
+            if (memory.tags().containsAll(tags)) {
                 filteredMemories.add(memory);
             }
         }
@@ -133,9 +146,6 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
                         .putExtra(Intent.EXTRA_STREAM, Uri.fromFile(Constants.MEMORIES_FILE));
                 startActivity(Intent.createChooser(emailIntent, "Export memories as csv attachment"));
                 return true;
-
-            case R.id.action_search:
-                return true; // todo
 
             default:
                 Log.d(Constants.LOG_TAG, "Unknown menu item was clicked in AddMemory (did you " +
@@ -209,7 +219,7 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
         });
 
         public MemoryRecyclerViewAdapter(Context ctx) {
-            this.inflater = LayoutInflater.from(ctx); // todo : is binding here needed?
+            this.inflater = LayoutInflater.from(ctx);
             Memory.setMemoriesList(memories); // so updates can be done through Memory's methods
             Memory.addMemoriesFromFile();
         }
