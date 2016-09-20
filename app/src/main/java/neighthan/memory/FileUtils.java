@@ -51,12 +51,12 @@ class FileUtils {
                     }
                     // if deleting, we just don't write anything back for this row
                     successful = true;
-                    continue;
+                    currentRow++;
                 } else {
                     fileWriter.write(line);
                     fileWriter.newLine();
+                    currentRow++;
                 }
-                currentRow++;
             }
             fileWriter.flush();
         } catch (IOException e) {

@@ -58,6 +58,7 @@ class Memory {
     private Date date;
     private List<String> displayTags; // displayed just as the user entered them (case-sensitive)
     private List<String> queryTags; // optimized for searching (all lowercase)
+    private String displayTagsString;
     private String text;
     private int id;
 
@@ -191,11 +192,14 @@ class Memory {
     }
 
     String tagsString() {
-        StringBuilder tagsString = new StringBuilder();
+        if (displayTagsString != null) { return displayTagsString; }
+
+        StringBuilder displayTagsStringBuilder = new StringBuilder();
         for (String tag : displayTags) {
-            tagsString.append(tag).append(TAG_DELIM);
+            displayTagsStringBuilder.append(tag).append(TAG_DELIM);
         }
-        return tagsString.substring(0, tagsString.length() - TAG_DELIM.length());
+        displayTagsString = displayTagsStringBuilder.substring(0, displayTagsStringBuilder.length() - TAG_DELIM.length());
+        return displayTagsString;
     }
 
     public String text() {

@@ -1,7 +1,5 @@
 package neighthan.memory;
 
-import android.app.Activity;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -35,12 +33,7 @@ public class MemoryDetailFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         if (getArguments().containsKey(ARG_ITEM_ID)) {
-            // Load the dummy content specified by the fragment
-            // arguments. In a real-world scenario, use a Loader
-            // to load content from a content provider.
             memory = Memory.getMemory(getArguments().getInt(ARG_ITEM_ID));
-
-            Activity activity = this.getActivity();
         }
     }
 
@@ -49,7 +42,6 @@ public class MemoryDetailFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.memory_detail, container, false);
 
-        // Show the dummy content as text in a TextView.
         if (memory != null) {
             ((TextView) rootView.findViewById(R.id.memory_detail)).setText(memory.text());
         }
