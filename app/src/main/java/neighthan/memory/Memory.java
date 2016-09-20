@@ -17,7 +17,7 @@ import java.util.Locale;
 /*
 TODO : Features
   - voice recording
-  - show tags somewhere in detail view? maybe showable from a menu button?
+  - show displayTags somewhere in detail view? maybe showable from a menu button?
   - settings menu ( for what settings? )
   - help menu (quick walk-through; especially things like tag: in the search bar)
 
@@ -29,6 +29,7 @@ TODO : Features
 
 TODO : BUGS
    - need to get target sdk back to 24 (have to figure out how to request storage permission)
+             https://developer.android.com/training/permissions/requesting.html
    - Adding a memory no longer works without external storage (set the value to false and try)
  */
 
@@ -36,26 +37,27 @@ TODO : BUGS
 /**
  *
  */
-public class Memory {
-    public static final String DELIM = "<~>";
-    public static final String TAG_DELIM = ",";
-    public static final String DATE_EXTRA = "dateExtra";
-    public static final String TAGS_EXTRA = "tagsExtra";
-    public static final String TEXT_EXTRA = "textExtra";
-    public static final String ID_EXTA = "idExtra";
-    public static final String DUMMY_NEWLINE = "%newline%";
-    public static final SimpleDateFormat DF = new SimpleDateFormat("M-d-yy h:mm a", Locale.US);
+class Memory {
+    static final String DELIM = "<~>";
+    static final String TAG_DELIM = ",";
+    static final String DATE_EXTRA = "dateExtra";
+    static final String TAGS_EXTRA = "tagsExtra";
+    static final String TEXT_EXTRA = "textExtra";
+    static final String ID_EXTA = "idExtra";
+    static final String DUMMY_NEWLINE = "%newline%";
+    static final SimpleDateFormat DF = new SimpleDateFormat("M-d-yy h:mm a", Locale.US);
 
     private static int nextId;
 
-    public static SortedList<Memory> memories; // this will be used for searching; some memories will
+    private static SortedList<Memory> memories; // this will be used for searching; some memories will
     // be removed to fit the search, so we need a second list that always contains all of the memories
 
     private static List<Memory> allMemories; // maintain memory.id == allMemories.indexOf(memory)
     // and memory.id == row in memories file containing this memory
 
     private Date date;
-    private List<String> tags;
+    private List<String> displayTags; // displayed just as the user entered them (case-sensitive)
+    private List<String> queryTags; // optimized for searching (all lowercase)
     private String text;
     private int id;
 
@@ -64,14 +66,14 @@ public class Memory {
      * of Memory.
      * @param mems empty sorted list where memories for the RecyclerView should be stored
      */
-    public static void setMemoriesList(SortedList<Memory> mems) {
+    static void setMemoriesList(SortedList<Memory> mems) {
         memories = mems;
     }
 
     /**
      * @return an unmodifiable view of the list of all memories
      */
-    public static List<Memory> getAllMemories(){
+    static List<Memory> getAllMemories(){
         return Collections.unmodifiableList(allMemories);
     }
 
@@ -80,8 +82,11 @@ public class Memory {
      * These memories are added to the list of all memories (returned by Memory.getAllMemories())
      * and to the SortedList which is shown by the RecyclerView.
      */
-    public static void addMemoriesFromFile() {
-        if (allMemories != null) { return; }
+    static void addMemoriesFromFile() {
+        if (allMemories != null) {
+            memories.addAll(allMemories);
+            return;
+        }
 
         try(BufferedReader memoryReader = new BufferedReader(new FileReader(Constants.MEMORIES_FILE))) {
             allMemories = new ArrayList<>();
@@ -108,14 +113,14 @@ public class Memory {
      * list of shown memories.
      * @param memoryString String representation of the Memory to be created
      */
-    public static void createMemory(String memoryString) {
+    static void createMemory(String memoryString) {
         FileUtils.addRow(memoryString);
         final Memory memory = new Memory(memoryString);
         allMemories.add(memory);
         memories.add(memory);
     }
 
-    public static void editMemory(int id, String newMemoryString) {
+    static void editMemory(int id, String newMemoryString) {
         FileUtils.editRow(id, newMemoryString);
         allMemories.get(id).update(newMemoryString);
     }
@@ -125,7 +130,7 @@ public class Memory {
      * memories. It is also removed from the file where memories are saved.
      * @param id of the memory to be deleted
      */
-    public static void deleteMemory(int id) {
+    static void deleteMemory(int id) {
         FileUtils.deleteRow(id);
 
         Memory toDelete = allMemories.get(id);
@@ -136,7 +141,7 @@ public class Memory {
         }
     }
 
-    public static void updateVisibleMemories(List<Memory> mems) {
+    static void updateVisibleMemories(List<Memory> mems) {
         memories.beginBatchedUpdates();
         for (int i = memories.size() - 1; i >= 0; i--) {
             final Memory memory = memories.get(i);
@@ -148,42 +153,46 @@ public class Memory {
         memories.endBatchedUpdates();
     }
 
-    public static Memory getMemory(int id) {
+    static Memory getMemory(int id) {
         return allMemories.get(id);
     }
 
-    public Memory(String memoryString) {
+    private Memory(String memoryString) {
         this(memoryString, nextId++);
     }
 
-    public Memory(String memoryString, int id) {
+    private Memory(String memoryString, int id) {
         this(memoryString.split(DELIM), id);
     }
 
-    public Memory(String[] fields, int id) {
+    private Memory(String[] fields, int id) {
         this(fields[0], fields[1], fields[2], id);
     }
 
-    public Memory(String date, String tags, String text, int id) {
+    private Memory(String date, String tags, String text, int id) {
         this.id = id;
         update(date, tags, text);
     }
 
-    public Date date() {
+    Date date() {
         return date;
     }
 
-    public String dateString() {
+    String dateString() {
         return DF.format(date);
     }
 
-    public List<String> tags() {
-        return tags;
+    List<String> displayTags() {
+        return displayTags;
     }
 
-    public String tagsString() {
+    List<String> queryTags() {
+        return queryTags;
+    }
+
+    String tagsString() {
         StringBuilder tagsString = new StringBuilder();
-        for (String tag : tags) {
+        for (String tag : displayTags) {
             tagsString.append(tag).append(TAG_DELIM);
         }
         return tagsString.substring(0, tagsString.length() - TAG_DELIM.length());
@@ -197,16 +206,19 @@ public class Memory {
         return id;
     }
 
-    public void update(String newMemoryString) {
+    private void update(String newMemoryString) {
         String[] splits = newMemoryString.split(DELIM);
         update(splits[0], splits[1], splits[2]);
     }
 
-    public void update(String date, String tags, String text) {
-        this.tags = new ArrayList<>(2);
+    private void update(String date, String tags, String text) {
+        this.displayTags = new ArrayList<>(2);
+        this.queryTags = new ArrayList<>(2);
         for (String tag : tags.split(TAG_DELIM)) {
-            if (! this.tags.contains(tag)) {
-                this.tags.add(tag);
+            tag = tag.trim();
+            if (! this.displayTags.contains(tag)) {
+                this.displayTags.add(tag);
+                this.queryTags.add(tag.toLowerCase());
             }
         }
         this.text = text.replace(DUMMY_NEWLINE, "\n");
@@ -229,14 +241,14 @@ public class Memory {
 
         Memory memory = (Memory) o;
 
-        return id == memory.id && date.equals(memory.date) && tags.equals(memory.tags) && text.equals(memory.text);
+        return id == memory.id && date.equals(memory.date) && displayTags.equals(memory.displayTags) && text.equals(memory.text);
 
     }
 
     @Override
     public int hashCode() {
         int result = date.hashCode();
-        result = 31 * result + tags.hashCode();
+        result = 31 * result + displayTags.hashCode();
         result = 31 * result + text.hashCode();
         result = 31 * result + id;
         return result;

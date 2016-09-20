@@ -21,7 +21,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -42,7 +41,6 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
     private boolean mTwoPane;
     private static final int MEMORY_TEXT_LENGTH = 55; // todo set this based on the screen width
     private static final int TAGS_TEXT_LENGTH = 10;
-    private static RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,9 +56,8 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        View view = findViewById(R.id.memory_list);
-        assert view != null;
-        recyclerView = (RecyclerView) view;
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.memory_list);
+        assert recyclerView != null;
         setupRecyclerView(recyclerView);
 
         if (findViewById(R.id.memory_detail_container) != null) {
@@ -94,10 +91,26 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
      */
     public boolean onQueryTextChange(String query) {
         query = query.toLowerCase();
-        final List<Memory> filteredMemories = query.startsWith(Constants.QUERY_TAG_PREFIX) ?
-                filterTags(Memory.getAllMemories(), Arrays.asList(query.split(Memory.TAG_DELIM))) : filter(Memory.getAllMemories(), query);
+        final List<Memory> filteredMemories;
+        if (query.startsWith(Constants.QUERY_TAG_PREFIX)) {
+            query = query.substring(Constants.QUERY_TAG_PREFIX.length());
+            String[] tags = query.split(Memory.TAG_DELIM);
+            if (tags.length == 0) {
+                filteredMemories = new ArrayList<>(0);
+            } else {
+                List<String> tagsList = new ArrayList<>(tags.length);
+                for (String tag : tags) {
+                    tag = tag.trim();
+                    if (!tag.isEmpty()) {tagsList.add(tag); }
+                }
+                filteredMemories = filterTags(Memory.getAllMemories(), tagsList);
+            }
+        } else {
+            filteredMemories = filter(Memory.getAllMemories(), query);
+        }
         Memory.updateVisibleMemories(filteredMemories);
-        recyclerView.scrollToPosition(0); // so you can see the memories better while searching
+        ((RecyclerView) findViewById(R.id.memory_list)).scrollToPosition(0);
+        // so you can see the memories better while searching
         return true;
     }
 
@@ -114,7 +127,9 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
     private List<Memory> filterTags(List<Memory> memories, List<String> tags) {
         final List<Memory> filteredMemories = new ArrayList<>();
         for (Memory memory : memories) {
-            if (memory.tags().containsAll(tags)) {
+            Log.d(Constants.LOG_TAG, "mem queryTags: " + memory.queryTags());
+            Log.d(Constants.LOG_TAG, "query tags: " + tags);
+            if (memory.queryTags().containsAll(tags)) {
                 filteredMemories.add(memory);
             }
         }
@@ -155,12 +170,11 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new MemoryRecyclerViewAdapter(this));
+        recyclerView.setAdapter(new MemoryRecyclerViewAdapter());
     }
 
     public class MemoryRecyclerViewAdapter extends RecyclerView.Adapter<MemoryRecyclerViewAdapter.ViewHolder> {
 
-        private final LayoutInflater inflater;
         private final Comparator<Memory> DATE_ORDER = new Comparator<Memory>() {
             @Override
             public int compare(Memory mem1, Memory mem2) {
@@ -172,7 +186,7 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
         * notifications to the recycler view (to update the items shown). This works very well with
         * using a search view too! You can update based on the query text.
         */
-        private final SortedList<Memory> memories = new SortedList<Memory>(Memory.class, new SortedList.Callback<Memory>() {
+        private final SortedList<Memory> memories = new SortedList<>(Memory.class, new SortedList.Callback<Memory>() {
             @Override
             public void onInserted(int position, int count) {
                 notifyItemRangeInserted(position, count);
@@ -218,8 +232,7 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
             }
         });
 
-        public MemoryRecyclerViewAdapter(Context ctx) {
-            this.inflater = LayoutInflater.from(ctx);
+        MemoryRecyclerViewAdapter() {
             Memory.setMemoriesList(memories); // so updates can be done through Memory's methods
             Memory.addMemoriesFromFile();
         }
@@ -234,7 +247,7 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             holder.memory = memories.get(position);
-            // show only the date (not time of day) and truncate tags and memory text
+            // show only the date (not time of day) and truncate displayTags and memory text
             holder.mIdView.setText(holder.memory.dateString().split(" ")[0] + "\n" +
                     holder.memory.tagsString().substring(0, Math.min(TAGS_TEXT_LENGTH, holder.memory.tagsString().length())));
             holder.mContentView.setText(holder.memory.text()
@@ -267,13 +280,13 @@ public class MemoryListActivity extends AppCompatActivity implements SearchView.
             return memories.size();
         }
 
-        public class ViewHolder extends RecyclerView.ViewHolder {
-            public final View mView;
-            public final TextView mIdView;
-            public final TextView mContentView;
+        class ViewHolder extends RecyclerView.ViewHolder {
+            final View mView;
+            final TextView mIdView;
+            final TextView mContentView;
             public Memory memory;
 
-            public ViewHolder(View view) {
+            ViewHolder(View view) {
                 super(view);
                 mView = view;
                 mIdView = (TextView) view.findViewById(R.id.id);

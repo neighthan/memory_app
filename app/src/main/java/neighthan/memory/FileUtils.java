@@ -16,12 +16,12 @@ import java.io.OutputStreamWriter;
 /**
  *
  */
-public class FileUtils {
+class FileUtils {
     private static final String TMP_FILE_NAME = "tmpFile.csv";
     // todo make this work with internal storage file too
     private static final File TMP_FILE = new File(Environment.getExternalStorageDirectory(), TMP_FILE_NAME);
 
-    public static void addRow(String toAdd) {
+    static void addRow(String toAdd) {
         try (FileWriter toMemoriesFile = new FileWriter(Constants.MEMORIES_FILE, true)) { // append mode
             toMemoriesFile.write(toAdd + "\n");
         } catch (IOException e) {
@@ -29,7 +29,7 @@ public class FileUtils {
         }
     }
 
-    public static void editRow(int rowToChange, String newMemoryString) {
+    static void editRow(int rowToChange, String newMemoryString) {
         boolean successful = false;
         boolean editing = !newMemoryString.isEmpty();
 
@@ -76,7 +76,7 @@ public class FileUtils {
         }
     }
 
-    public static void deleteRow(int rowToDelete) {
+    static void deleteRow(int rowToDelete) {
         editRow(rowToDelete, "");
     }
 
