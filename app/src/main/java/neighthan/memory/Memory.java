@@ -100,11 +100,11 @@ class Memory {
                 allMemories.add(memory);
             }
             nextId = i;
+            memories.addAll(allMemories);
+            Log.d(Constants.LOG_TAG, "Finished loading memories.");
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(Constants.LOG_TAG, "Memories were not loaded from a file.", e);
         }
-        memories.addAll(allMemories);
-        Log.d(Constants.LOG_TAG, "Finished loading memories.");
     }
 
     //        OutputStreamWriter toMemoriesFile = new OutputStreamWriter(
