@@ -85,8 +85,11 @@ class AddEditMemory extends StatelessWidget {
           new Text('Tags'),
           new Expanded(child: new TextField()),
         ]),
-        new Text('Memory'),
-        new Expanded(child: new TextField()),
+        new Container(
+          child: new Text('Memory'),
+          padding: new EdgeInsets.all(16.0),
+        ),
+        new Expanded(child: new TextField(maxLines: null)),
         new RaisedButton(onPressed: _addMemory, child: new Center(child: new Text('Save')))
       ]),
     );
