@@ -13,8 +13,9 @@ class MemoryApp extends StatelessWidget {
 }
 
 class MemoryList extends StatefulWidget {
-  final List<Memory> _memories = ['Memory 1', 'Memory 2'].map((text) {
-    return new Memory(text: text);
+  final List<Memory> _memories = [['1-1', 'R, s', 'Memory 1'], ['1-2', 'R, s', 'Memory 2']]
+  .map((mem) {
+    return new Memory(date: mem[0], tags: mem[1], text: mem[2]);
   }).toList();
   @override
   MemoryListState createState() => new MemoryListState();
@@ -50,14 +51,20 @@ class MemoryListState extends State<MemoryList> {
 }
 
 class Memory extends StatelessWidget {
-  Memory({this.text});
+  Memory({this.date, this.tags, this.text});
+  final date;
+  final tags;
   final text;
 
   @override
   Widget build(BuildContext context) {
-    return new ListTile(
-      title: new Text(text),
-    );
+    return new Row(children: <Widget>[
+      new Column(children: <Widget>[
+        new Text(date),
+        new Text(tags),
+      ],),
+      new Text(text),
+    ]);
   }
 }
 
@@ -70,7 +77,16 @@ class AddEditMemory extends StatelessWidget {
     return new Scaffold(
       appBar: new AppBar(title: new Text('$addOrEdit Memory')),
       body: new Column(children: <Widget>[
-        new TextField(),
+        new Row(children: <Widget>[
+          new Text('Date'),
+          new Expanded(child: new TextField()),
+        ]),
+        new Row(children: <Widget>[
+          new Text('Tags'),
+          new Expanded(child: new TextField()),
+        ]),
+        new Text('Memory'),
+        new Expanded(child: new TextField()),
         new RaisedButton(onPressed: _addMemory, child: new Center(child: new Text('Save')))
       ]),
     );
