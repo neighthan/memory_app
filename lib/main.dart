@@ -78,18 +78,27 @@ class AddEditMemory extends StatelessWidget {
       appBar: new AppBar(title: new Text('$addOrEdit Memory')),
       body: new Column(children: <Widget>[
         new Row(children: <Widget>[
-          new Text('Date'),
+          new Container(
+            child: new Text('Date'),
+            padding: new EdgeInsets.all(8.0),
+          ),
           new Expanded(child: new TextField()),
         ]),
         new Row(children: <Widget>[
-          new Text('Tags'),
+          new Container(
+            child: new Text('Tags'),
+            padding: new EdgeInsets.all(8.0),
+          ),
           new Expanded(child: new TextField()),
         ]),
         new Container(
           child: new Text('Memory'),
           padding: new EdgeInsets.all(16.0),
         ),
-        new Expanded(child: new TextField(maxLines: null)),
+        new Expanded(child: new Container(
+          child: new TextField(maxLines: null),
+          padding: new EdgeInsets.all(8.0),
+        )),
         new RaisedButton(onPressed: _addMemory, child: new Center(child: new Text('Save')))
       ]),
     );
