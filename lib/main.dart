@@ -30,6 +30,21 @@ class MemoryListState extends State<MemoryList> {
       body: new ListView(
         children: widget._memories,
       ),
+      floatingActionButton: new FloatingActionButton(
+        tooltip: 'Add Memory',
+        child: new Icon(Icons.add),
+        onPressed: _addMemory,
+      ),
+    );
+  }
+
+  _addMemory() {
+    Navigator.of(context).push(
+      new MaterialPageRoute(
+        builder: (context) {
+          return new AddEditMemory('Add');
+        }
+      )
     );
   }
 }
@@ -43,5 +58,24 @@ class Memory extends StatelessWidget {
     return new ListTile(
       title: new Text(text),
     );
+  }
+}
+
+class AddEditMemory extends StatelessWidget {
+  AddEditMemory(this.addOrEdit);
+  final String addOrEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      appBar: new AppBar(title: new Text('$addOrEdit Memory')),
+      body: new Column(children: <Widget>[
+        new TextField(),
+        new RaisedButton(onPressed: _addMemory, child: new Center(child: new Text('Save')))
+      ]),
+    );
+  }
+
+  _addMemory() {
   }
 }
