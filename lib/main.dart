@@ -79,13 +79,22 @@ class MemoryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return new Row(children: <Widget>[
-      new Column(children: <Widget>[
-        new Text(memory.date),
-        new Text(memory.tags),
-      ],),
-      new Text(memory.text),
-    ]);
+    return new GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          new MaterialPageRoute(
+            builder: (context) => new MemoryDetail(memory),
+          )
+        );
+      },
+      child: new Row(children: <Widget>[
+        new Column(children: <Widget>[
+          new Text(memory.date),
+          new Text(memory.tags),
+        ],),
+        new Text(memory.text),
+      ]),
+    );
   }
 }
 
@@ -151,6 +160,19 @@ class AddEditMemory extends StatelessWidget {
         )),
         new RaisedButton(onPressed: _addMemory, child: new Center(child: new Text('Save')))
       ]),
+    );
+  }
+}
+
+class MemoryDetail extends StatelessWidget {
+  MemoryDetail(this.memory);
+  final Memory memory;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      appBar: new AppBar(title: new Text(memory.date)),
+      body: new Text(memory.text),
     );
   }
 }
