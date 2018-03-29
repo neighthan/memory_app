@@ -184,7 +184,15 @@ class MemoryDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      appBar: new AppBar(title: new Text(memory.date)),
+      appBar: new AppBar(
+        title: new Text(memory.date),
+        actions: <Widget>[
+          new IconButton(
+            icon: new Icon(Icons.delete),
+            onPressed: () => deleteMemory(context),
+          ),
+        ],
+      ),
       body: new Text(memory.text),
       floatingActionButton: new FloatingActionButton(
         tooltip: 'Edit',
@@ -194,7 +202,7 @@ class MemoryDetail extends StatelessWidget {
     );
   }
 
-    _editMemoryRoute(BuildContext context, int idx) {
+  _editMemoryRoute(BuildContext context, int idx) {
     Navigator.of(context).push(
       new MaterialPageRoute(
         builder: (context) {
@@ -202,5 +210,10 @@ class MemoryDetail extends StatelessWidget {
         }
       )
     );
+  }
+
+  void deleteMemory(BuildContext context) {
+    deleteMemoryAction(memory);
+    Navigator.of(context).pop();
   }
 }

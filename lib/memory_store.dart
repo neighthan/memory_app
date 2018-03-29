@@ -27,6 +27,18 @@ class MemoryStore extends Store {
     triggerOnAction(updateMemoryAction, (Memory memory) {
       _memories[memory.idx] = memory;
     });
+
+    triggerOnAction(deleteMemoryAction, (Memory memory) {
+      _memories.removeAt(memory.idx);
+      if (_memories.isEmpty) {
+        return;
+      }
+
+      // fix the indices of all memories after the deleted one
+      for (int i = memory.idx; i < _memories.length; i++) {
+        _memories[i].idx--;
+      }
+    });
   }
 
   void loadMemories() {
@@ -40,3 +52,4 @@ final StoreToken memoryStoreToken = new StoreToken(new MemoryStore());
 
 final Action<Memory> addMemoryAction = new Action<Memory>();
 final Action<Memory> updateMemoryAction = new Action<Memory>();
+final Action<Memory> deleteMemoryAction = new Action<Memory>();
