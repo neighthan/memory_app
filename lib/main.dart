@@ -26,6 +26,7 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
   void initState() {
     super.initState();
     memoryStore = listenToStore(memoryStoreToken);
+    memoryStore.loadMemories().then((_) => setState(() => {}));
   }
 
   @override
@@ -129,9 +130,9 @@ class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<Add
       assert(addOrEdit == 'Edit');
       assert(memoryIdx != null);
       updateMemoryAction(memory);
+      Navigator.of(context).pop();
     }
 
-    Navigator.of(context).pop();
     Navigator.of(context).pop();
   }
 

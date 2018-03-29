@@ -5,7 +5,9 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_flux:
-    path: ../flutter_flux
+    git:
+      url: git://github.com/google/flutter_flux
+  path_provider: '^0.4.0'
 
 dev_dependencies:
   flutter_test:
