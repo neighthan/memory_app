@@ -6,6 +6,11 @@ class Memory {
   String date;
   String tags;
   String text;
+
+  @override
+  String toString() {
+    return "idx: $idx, date: $date; tags: $tags; text: $text";
+  }
 }
 
 class MemoryStore extends Store {

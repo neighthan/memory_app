@@ -32,7 +32,6 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
 
   @override
   Widget build(BuildContext context) {
-    print("${memoryStore.memories.length} (in build)");
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Memory'),
@@ -87,36 +86,53 @@ class MemoryWidget extends StatelessWidget {
   }
 }
 
-class AddEditMemory extends StatelessWidget {
+class AddEditMemory extends StatefulWidget {
   AddEditMemory(this.addOrEdit, [this.memoryIdx]);
   final String addOrEdit;
   final int memoryIdx;
 
   @override
-  Widget build(BuildContext context) {
-    final Memory memory = new Memory(
-      memoryIdx == null? memoryStore.memories.length : memoryIdx,
-        '', '', ''
-      );
+  AddEditMemoryState createState() => new AddEditMemoryState(addOrEdit, memoryIdx);
+}
 
-    _addMemory() {
-      if (addOrEdit == 'Add') {
-        addMemoryAction(memory);
-      } else {
-        assert(addOrEdit == 'Edit');
-        assert(memoryIdx != null);
-        updateMemoryAction(memory);
+class AddEditMemoryState extends State<AddEditMemory> {
+  AddEditMemoryState(this.addOrEdit, this.memoryIdx) :
+    memory = new Memory(
+      memoryStore.memories.length, '', '', ''
+    ),
+    dateController = new TextEditingController(),
+    tagsController = new TextEditingController(),
+    textController = new TextEditingController()
+    {
+      if (memoryIdx != null) {
+        memory.idx = memoryIdx;
+        memory.text = textController.text = memoryStore.memories[memoryIdx].text;
+        memory.tags = tagsController.text = memoryStore.memories[memoryIdx].tags;
+        memory.date = dateController.text = memoryStore.memories[memoryIdx].date;
       }
+    }
+  final String addOrEdit;
+  final int memoryIdx;
+  final Memory memory;
+  final TextEditingController dateController;
+  final TextEditingController tagsController;
+  final TextEditingController textController;
 
-      Navigator.of(context).pop();
+  _addMemory(BuildContext context) {
+    if (addOrEdit == 'Add') {
+      addMemoryAction(memory);
+    } else {
+      assert(addOrEdit == 'Edit');
+      assert(memoryIdx != null);
+      updateMemoryAction(memory);
     }
 
-    if (memoryIdx != null) {
-      memory.text = memoryStore.memories[memoryIdx].text;
-      memory.tags = memoryStore.memories[memoryIdx].tags;
-      memory.date = memoryStore.memories[memoryIdx].date;
-    }
+    Navigator.of(context).pop();
+    Navigator.of(context).pop();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(title: new Text('$addOrEdit Memory')),
       body: new Column(children: <Widget>[
@@ -126,6 +142,7 @@ class AddEditMemory extends StatelessWidget {
             padding: new EdgeInsets.all(8.0),
           ),
           new Expanded(child: new TextField(
+            controller: dateController,
             onChanged: (text) => memory.date = text,
           )),
         ]),
@@ -135,6 +152,7 @@ class AddEditMemory extends StatelessWidget {
             padding: new EdgeInsets.all(8.0),
           ),
           new Expanded(child: new TextField(
+            controller: tagsController,
             onChanged: (text) => memory.tags = text,
           )),
         ]),
@@ -145,11 +163,15 @@ class AddEditMemory extends StatelessWidget {
         new Expanded(child: new Container(
           child: new TextField(
             maxLines: null,
+            controller: textController,
             onChanged: (text) => memory.text = text,
           ),
           padding: new EdgeInsets.all(8.0),
         )),
-        new RaisedButton(onPressed: _addMemory, child: new Center(child: new Text('Save')))
+        new RaisedButton(
+          onPressed: () => _addMemory(context),
+          child: new Center(child: new Text('Save'))
+        )
       ]),
     );
   }
