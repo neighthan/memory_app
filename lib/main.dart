@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 import 'memory_store.dart';
 
-MemoryStore memoryStore = new MemoryStore();
-
 void main() => runApp(new MemoryApp());
 
 class MemoryApp extends StatelessWidget {
@@ -95,28 +93,34 @@ class AddEditMemory extends StatefulWidget {
   AddEditMemoryState createState() => new AddEditMemoryState(addOrEdit, memoryIdx);
 }
 
-class AddEditMemoryState extends State<AddEditMemory> {
+class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<AddEditMemory>{
   AddEditMemoryState(this.addOrEdit, this.memoryIdx) :
-    memory = new Memory(
-      memoryStore.memories.length, '', '', ''
-    ),
+    memory = new Memory(0, '', '', ''),
     dateController = new TextEditingController(),
     tagsController = new TextEditingController(),
-    textController = new TextEditingController()
-    {
-      if (memoryIdx != null) {
-        memory.idx = memoryIdx;
-        memory.text = textController.text = memoryStore.memories[memoryIdx].text;
-        memory.tags = tagsController.text = memoryStore.memories[memoryIdx].tags;
-        memory.date = dateController.text = memoryStore.memories[memoryIdx].date;
-      }
-    }
+    textController = new TextEditingController();
   final String addOrEdit;
   final int memoryIdx;
   final Memory memory;
   final TextEditingController dateController;
   final TextEditingController tagsController;
   final TextEditingController textController;
+  MemoryStore memoryStore;
+
+  @override
+  void initState() {
+    super.initState();
+    memoryStore = listenToStore(memoryStoreToken);
+
+    if (memoryIdx == null) {
+      memory.idx = memoryStore.memories.length;
+    } else {
+      memory.idx = memoryIdx;
+      memory.text = textController.text = memoryStore.memories[memoryIdx].text;
+      memory.tags = tagsController.text = memoryStore.memories[memoryIdx].tags;
+      memory.date = dateController.text = memoryStore.memories[memoryIdx].date;
+    }
+  }
 
   _addMemory(BuildContext context) {
     if (addOrEdit == 'Add') {
@@ -188,17 +192,16 @@ class MemoryDetail extends StatelessWidget {
         title: new Text(memory.date),
         actions: <Widget>[
           new IconButton(
+            icon: new Icon(Icons.edit),
+            onPressed: () => _editMemoryRoute(context, memory.idx)
+          ),
+          new IconButton(
             icon: new Icon(Icons.delete),
             onPressed: () => deleteMemory(context),
           ),
         ],
       ),
       body: new Text(memory.text),
-      floatingActionButton: new FloatingActionButton(
-        tooltip: 'Edit',
-        child: new Icon(Icons.edit),
-        onPressed: () => _editMemoryRoute(context, memory.idx),
-      ),
     );
   }
 
