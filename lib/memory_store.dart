@@ -10,17 +10,39 @@ class Memory {
   String tags;
   String text;
 
+  static final String lineSeparator = '\n';
+  static final String itemSeparator = ',';
+  static final String lineSeparatorReplacement = '<<newline>>';
+  static final String itemSeparatorReplacement = '<<comma>>';
+
   @override
   String toString() {
     return "idx: $idx, date: $date; tags: $tags; text: $text";
   }
+
+  String serialize() {
+    return (new StringBuffer()
+        ..writeAll([date, tags, text].map(replaceSeparators), itemSeparator)
+      ).toString();
+  }
+
+  static Memory deserialize(int idx, String memString) {
+    List<String> memItems = memString.split(itemSeparator).map(returnSeparators).toList();
+    return new Memory(idx, memItems[0], memItems[1], memItems[2]);
+  }
+
+  static String replaceSeparators(String s) {
+    return s.replaceAll(lineSeparator, lineSeparatorReplacement)
+        .replaceAll(itemSeparator, itemSeparatorReplacement);
+  }
+
+  static String returnSeparators(String s) {
+    return s.replaceAll(lineSeparatorReplacement, lineSeparator)
+        .replaceAll(itemSeparatorReplacement, itemSeparator);
+  }
 }
 
 class MemoryStore extends Store {
-  final String lineSeparator = '\n';
-  final String itemSeparator = ',';
-  final String lineSeparatorReplacement = '<<newline>>';
-  final String itemSeparatorReplacement = '<<comma>>';
   bool memoriesLoaded = false;
   final List<Memory> _memories = <Memory>[];
   List<Memory> get memories => new List<Memory>.unmodifiable(_memories);
@@ -64,13 +86,12 @@ class MemoryStore extends Store {
       final fileContents = await file.readAsString();
 
       int idx = 0;
-      for (String line in fileContents.split(lineSeparator)) {
+      for (String line in fileContents.split(Memory.lineSeparator)) {
         if (line.isEmpty) {
           break;
         }
 
-        List<String> memItems = line.split(itemSeparator).map(returnSeparators).toList();
-        _memories.add(new Memory(idx, memItems[0], memItems[1], memItems[2]));
+        _memories.add(Memory.deserialize(idx, line));
         idx++;
       }
     }
@@ -82,20 +103,10 @@ class MemoryStore extends Store {
 
     StringBuffer memoryString = new StringBuffer();
     for (Memory mem in _memories) {
-      memoryString.writeAll([mem.date, mem.tags, mem.text].map(replaceSeparators), itemSeparator);
-      memoryString.write(lineSeparator);
+      memoryString.write(mem.serialize());
+      memoryString.write(Memory.lineSeparator);
     }
     file.writeAsString(memoryString.toString());
-  }
-
-  String replaceSeparators(String s) {
-    return s.replaceAll(lineSeparator, lineSeparatorReplacement)
-        .replaceAll(itemSeparator, itemSeparatorReplacement);
-  }
-
-  String returnSeparators(String s) {
-    return s.replaceAll(lineSeparatorReplacement, lineSeparator)
-        .replaceAll(itemSeparatorReplacement, itemSeparator);
   }
 
   Future<File> get _memoriesFile async {
