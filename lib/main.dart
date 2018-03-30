@@ -76,7 +76,7 @@ class MemoryWidget extends StatelessWidget {
       },
       child: new Row(children: <Widget>[
         new Column(children: <Widget>[
-          new Text(memory.date),
+          new Text("${memory.date.month}-${memory.date.day}-${memory.date.year.toString().substring(2, 4)}"),
           new Text(memory.tags),
         ],),
         new Text(memory.text),
@@ -96,13 +96,11 @@ class AddEditMemory extends StatefulWidget {
 
 class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<AddEditMemory>{
   AddEditMemoryState(this.addOrEdit, this.memoryIdx) :
-    memory = new Memory(0, '', '', ''),
     dateController = new TextEditingController(),
     tagsController = new TextEditingController(),
     textController = new TextEditingController();
   final String addOrEdit;
   final int memoryIdx;
-  final Memory memory;
   final TextEditingController dateController;
   final TextEditingController tagsController;
   final TextEditingController textController;
@@ -113,17 +111,23 @@ class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<Add
     super.initState();
     memoryStore = listenToStore(memoryStoreToken);
 
-    if (memoryIdx == null) {
-      memory.idx = memoryStore.memories.length;
+    if (memoryIdx != null) {
+      textController.text = memoryStore.memories[memoryIdx].text;
+      tagsController.text = memoryStore.memories[memoryIdx].tags;
+      dateController.text = Memory.formatDateTime(memoryStore.memories[memoryIdx].date);
     } else {
-      memory.idx = memoryIdx;
-      memory.text = textController.text = memoryStore.memories[memoryIdx].text;
-      memory.tags = tagsController.text = memoryStore.memories[memoryIdx].tags;
-      memory.date = dateController.text = memoryStore.memories[memoryIdx].date;
+      dateController.text = Memory.formatDateTime(new DateTime.now());
     }
   }
 
   _addMemory(BuildContext context) {
+    Memory memory = new Memory(
+      memoryIdx == null ? memoryStore.memories.length : memoryIdx,
+      dateController.text,
+      tagsController.text,
+      textController.text
+    );
+
     if (addOrEdit == 'Add') {
       addMemoryAction(memory);
     } else {
@@ -148,7 +152,6 @@ class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<Add
           ),
           new Expanded(child: new TextField(
             controller: dateController,
-            onChanged: (text) => memory.date = text,
           )),
         ]),
         new Row(children: <Widget>[
@@ -158,7 +161,6 @@ class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<Add
           ),
           new Expanded(child: new TextField(
             controller: tagsController,
-            onChanged: (text) => memory.tags = text,
           )),
         ]),
         new Container(
@@ -169,7 +171,6 @@ class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<Add
           child: new TextField(
             maxLines: null,
             controller: textController,
-            onChanged: (text) => memory.text = text,
           ),
           padding: new EdgeInsets.all(8.0),
         )),
@@ -183,14 +184,15 @@ class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<Add
 }
 
 class MemoryDetail extends StatelessWidget {
-  MemoryDetail(this.memory);
+  MemoryDetail(this.memory) : timeFormat = Memory.formatDateTime(memory.date);
   final Memory memory;
+  final String timeFormat;
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(
-        title: new Text(memory.date),
+        title: new Text(timeFormat),
         actions: <Widget>[
           new IconButton(
             icon: new Icon(Icons.edit),

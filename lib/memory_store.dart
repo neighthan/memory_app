@@ -4,9 +4,10 @@ import 'package:flutter_flux/flutter_flux.dart';
 import 'package:path_provider/path_provider.dart';
 
 class Memory {
-  Memory(this.idx, this.date, this.tags, this.text);
+  Memory(this.idx, String dateString, this.tags, this.text):
+    date = parseDateTime(dateString);
   int idx;
-  String date;
+  DateTime date;
   String tags;
   String text;
 
@@ -22,7 +23,7 @@ class Memory {
 
   String serialize() {
     return (new StringBuffer()
-        ..writeAll([date, tags, text].map(replaceSeparators), itemSeparator)
+        ..writeAll([date.toString(), tags, text].map(replaceSeparators), itemSeparator)
       ).toString();
   }
 
@@ -39,6 +40,48 @@ class Memory {
   static String returnSeparators(String s) {
     return s.replaceAll(lineSeparatorReplacement, lineSeparator)
         .replaceAll(itemSeparatorReplacement, itemSeparator);
+  }
+
+  static DateTime parseDateTime(String dateString) {
+    try {
+      return DateTime.parse(dateString);
+    } catch (FormatException) {
+      List<String> splits = dateString.split(' ');
+      List<int> monthDayYear = splits[0].split('-').map(int.parse).toList();
+      List<int> hourMinute = splits[1].split(':').map(int.parse).toList();
+      String ampm = splits[2];
+
+      int year = monthDayYear[2];
+      int hour = hourMinute[0];
+      year += 2000;
+
+      if (hour == 1 && ampm == 'AM') {
+        hour = 0;
+      } else if (hour != 12 && ampm == 'PM') {
+        hour += 12;
+      }
+
+      return new DateTime(year, monthDayYear[0], monthDayYear[1], hour, hourMinute[1]);
+    }
+  }
+
+  static String formatDateTime(DateTime date) {
+    String timeFormat = "${date.month}-${date.day}-"
+      "${date.year.toString().substring(2, 4)} ";
+
+    String ampm = "AM";
+    int hour = date.hour;
+    if (hour >= 12) {
+      ampm = "PM";
+      if (hour > 12) {
+        hour -= 12;
+      }
+    } else if (hour == 0) {
+      hour = 1;
+    }
+
+    timeFormat += "$hour:${date.minute < 10 ? 0 : ''}${date.minute} $ampm";
+    return timeFormat;
   }
 }
 
@@ -79,7 +122,7 @@ class MemoryStore extends Store {
 
     if (testing) {
       for (int i = 0; i < 10; i++) {
-        _memories.add(new Memory(i, "1-$i", 'R, s', 'Memory $i'));
+        _memories.add(new Memory(i, DateTime.parse("2018-01-0$i").toString(), 'R, s', 'Memory $i'));
       }
     } else {
       final file = await _memoriesFile;
