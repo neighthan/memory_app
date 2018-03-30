@@ -198,7 +198,7 @@ class MemoryDetail extends StatelessWidget {
           ),
           new IconButton(
             icon: new Icon(Icons.delete),
-            onPressed: () => deleteMemory(context),
+            onPressed: () => confirmDeleteMemory(context),
           ),
         ],
       ),
@@ -216,8 +216,28 @@ class MemoryDetail extends StatelessWidget {
     );
   }
 
+  void confirmDeleteMemory(BuildContext context) {
+    showDialog(
+      context: context,
+      child: new AlertDialog(
+        content: new Text('Are you sure you want to delete this memory?'),
+        actions: <Widget>[
+          new FlatButton(
+            child: new Text('No'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          new FlatButton(
+            child: new Text('Yes'),
+            onPressed: () => deleteMemory(context),
+          ),
+        ],
+      ),
+    );
+  }
+
   void deleteMemory(BuildContext context) {
     deleteMemoryAction(memory);
+    Navigator.of(context).pop();
     Navigator.of(context).pop();
   }
 }
