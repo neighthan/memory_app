@@ -55,7 +55,7 @@ class Memory {
       int hour = hourMinute[0];
       year += 2000;
 
-      if (hour == 1 && ampm == 'AM') {
+      if (hour == 12 && ampm == 'AM') {
         hour = 0;
       } else if (hour != 12 && ampm == 'PM') {
         hour += 12;
@@ -77,7 +77,7 @@ class Memory {
         hour -= 12;
       }
     } else if (hour == 0) {
-      hour = 1;
+      hour = 12;
     }
 
     timeFormat += "$hour:${date.minute < 10 ? 0 : ''}${date.minute} $ampm";
@@ -125,17 +125,21 @@ class MemoryStore extends Store {
         _memories.add(new Memory(i, DateTime.parse("2018-01-0$i").toString(), 'R, s', 'Memory $i'));
       }
     } else {
-      final file = await _memoriesFile;
-      final fileContents = await file.readAsString();
+      try {
+        final file = await _memoriesFile;
+        final fileContents = await file.readAsString();
 
-      int idx = 0;
-      for (String line in fileContents.split(Memory.lineSeparator)) {
-        if (line.isEmpty) {
-          break;
+        int idx = 0;
+        for (String line in fileContents.split(Memory.lineSeparator)) {
+          if (line.isEmpty) {
+            break;
+          }
+
+          _memories.add(Memory.deserialize(idx, line));
+          idx++;
         }
-
-        _memories.add(Memory.deserialize(idx, line));
-        idx++;
+      } on FileSystemException {
+        // no memories file exists;
       }
     }
     memoriesLoaded = true;
