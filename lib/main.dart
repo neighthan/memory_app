@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
+import 'package:share/share.dart';
 import 'package:import_file/import_file.dart';
 import 'memory_store.dart';
 
@@ -39,9 +40,13 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
         title: new Text('Memory'),
         actions: <Widget>[
           new IconButton(
-            icon: new Icon(Icons.import_export),
+            icon: new Icon(Icons.file_upload),
             onPressed: importMemories,
           ),
+          new IconButton(
+            icon: new Icon(Icons.send),
+            onPressed: exportMemories,
+          )
         ],
       ),
       body: new ListView.builder(
@@ -56,6 +61,10 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
         onPressed: _addMemoryRoute,
       ),
     );
+  }
+
+  exportMemories() async {
+    share(await (await MemoryStore.memoriesFile).readAsString());
   }
 
   _addMemoryRoute() {

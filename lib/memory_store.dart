@@ -126,7 +126,7 @@ class MemoryStore extends Store {
       }
     } else {
       try {
-        final file = await _memoriesFile;
+        final file = await memoriesFile;
         final fileContents = await file.readAsString();
 
         int idx = 0;
@@ -146,7 +146,7 @@ class MemoryStore extends Store {
   }
 
   void saveMemories() async {
-    final file = await _memoriesFile;
+    final file = await memoriesFile;
 
     StringBuffer memoryString = new StringBuffer();
     for (Memory mem in _memories) {
@@ -156,7 +156,7 @@ class MemoryStore extends Store {
     file.writeAsString(memoryString.toString());
   }
 
-  Future<File> get _memoriesFile async {
+  static Future<File> get memoriesFile async {
     final directory = await getApplicationDocumentsDirectory();
     return new File("${directory.path}/memories.csv");
   }
