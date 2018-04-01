@@ -1,5 +1,8 @@
+import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
+import 'package:import_file/import_file.dart';
 import 'memory_store.dart';
 
 void main() => runApp(new MemoryApp());
@@ -34,6 +37,12 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Memory'),
+        actions: <Widget>[
+          new IconButton(
+            icon: new Icon(Icons.import_export),
+            onPressed: importMemories,
+          ),
+        ],
       ),
       body: new ListView.builder(
         itemCount: memoryStore.memories.length,
@@ -58,6 +67,20 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
       )
     );
   }
+
+  importMemories() async {
+    String uri = await ImportFile.importFile('*/*');
+    String data = await new File(uri).readAsString();
+
+    for (String line in data.split(Memory.lineSeparator)) {
+      try {
+        addMemoryAction(Memory.deserialize(memoryStore.memories.length, line));
+      } catch(error) {
+        print(error);
+        print(line);
+      }
+    }
+  }
 }
 
 class MemoryWidget extends StatelessWidget {
@@ -77,9 +100,9 @@ class MemoryWidget extends StatelessWidget {
       child: new Row(children: <Widget>[
         new Column(children: <Widget>[
           new Text("${memory.date.month}-${memory.date.day}-${memory.date.year.toString().substring(2, 4)}"),
-          new Text(memory.tags),
+          new Text(memory.tags.substring(0, min(memory.tags.length, 20)), maxLines: 1),
         ],),
-        new Text(memory.text),
+        new Text(memory.text.substring(0, min(memory.text.length, 40)), maxLines: 3, softWrap: true),
       ]),
     );
   }
