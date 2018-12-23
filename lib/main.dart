@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 import 'package:share/share.dart';
-import 'package:import_file/import_file.dart';
+import 'package:file_picker/file_picker.dart';
 import 'memory_store.dart';
 
 void main() => runApp(new MemoryApp());
@@ -64,7 +64,7 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
   }
 
   exportMemories() async {
-    share(await (await MemoryStore.memoriesFile).readAsString());
+    Share.share(await (await MemoryStore.memoriesFile).readAsString());
   }
 
   _addMemoryRoute() {
@@ -78,8 +78,22 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
   }
 
   importMemories() async {
-    String uri = await ImportFile.importFile('*/*');
-    String data = await new File(uri).readAsString();
+    String filePath;
+
+    try {
+      filePath = await FilePicker.getFilePath(type: FileType.ANY);
+      print("File path: " + filePath);
+
+      if (filePath == '') {
+        return;
+      }
+    } catch (error) {
+      print("Error while picking the file: " + error.toString());
+      return;
+    }
+
+    // String uri = await ImportFile.importFile('*/*');
+    String data = await new File(filePath).readAsString();
 
     for (String line in data.split(Memory.lineSeparator)) {
       try {
