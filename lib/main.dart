@@ -124,21 +124,26 @@ class MemoryWidget extends StatelessWidget {
         padding: EdgeInsets.all(10),
         child: new Row(
           children: <Widget>[
-            new Column(
-              children: <Widget>[
-                  new Text(
-                    "${memory.date.month}-${memory.date.day}-${memory.date.year.toString().substring(2, 4)}",
+            new Expanded(
+              flex: 3,
+              child: new Column(
+                children: <Widget>[
+                    new Text(
+                      "${memory.date.month}-${memory.date.day}-${memory.date.year.toString().substring(2, 4)}",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    new Text(
+                      memory.tags,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     style: TextStyle(fontSize: 16),
-                  ),
-                  new Text(
-                    memory.tags.substring(0, min(memory.tags.length, 10)),
-                    maxLines: 1,
-                  style: TextStyle(fontSize: 16),
-                  ),
-                ],
+                    ),
+                  ],
+              ),
             ),
             new SizedBox(width: 20),
-            new Flexible(
+            new Expanded(
+              flex: 7,
               child: new Text(
                 memory.text, maxLines: 3, softWrap: true,
                 overflow: TextOverflow.ellipsis,
