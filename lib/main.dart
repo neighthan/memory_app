@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 import 'package:share/share.dart';
@@ -255,9 +254,13 @@ class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<Add
 }
 
 class MemoryDetail extends StatelessWidget {
-  MemoryDetail(this.memory) : timeFormat = Memory.formatDateTime(memory.date);
   final Memory memory;
   final String timeFormat;
+  final List<String> splitTags;
+
+  MemoryDetail(this.memory)
+    : timeFormat = Memory.formatDateTime(memory.date),
+      splitTags = memory.tags.split(",");
 
   @override
   Widget build(BuildContext context) {
@@ -274,6 +277,17 @@ class MemoryDetail extends StatelessWidget {
             onPressed: () => confirmDeleteMemory(context),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(30),
+          child: Container(
+            height: 30,
+            alignment: Alignment.center,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: splitTags.map((tag) => buildTagWidget(tag)).toList(),
+            ),
+          ),
+        ),
       ),
       body: new Padding(
         padding: EdgeInsets.all(16),
@@ -319,4 +333,12 @@ class MemoryDetail extends StatelessWidget {
     Navigator.of(context).pop();
     Navigator.of(context).pop();
   }
+}
+
+Widget buildTagWidget(String tag) {
+  final textStyle = TextStyle(color: Colors.white);
+  return new Padding(
+    padding: EdgeInsets.symmetric(horizontal: 6),
+    child: Text(tag, style: textStyle)
+  );
 }
