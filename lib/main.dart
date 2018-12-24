@@ -120,21 +120,34 @@ class MemoryWidget extends StatelessWidget {
           )
         );
       },
-      child: new Row(children: <Widget>[
-        new Column(
+      child: new Padding(
+        padding: EdgeInsets.all(10),
+        child: new Row(
           children: <Widget>[
-              new Text("${memory.date.month}-${memory.date.day}-${memory.date.year.toString().substring(2, 4)}"),
-              new Text(memory.tags.substring(0, min(memory.tags.length, 10)), maxLines: 1),
-            ],
-        ),
-        new Flexible(
-          child: new Text(
-            memory.text, maxLines: 3, softWrap: true,
-            overflow: TextOverflow.ellipsis
-          )
-        )]
-      )
-    );
+            new Column(
+              children: <Widget>[
+                  new Text(
+                    "${memory.date.month}-${memory.date.day}-${memory.date.year.toString().substring(2, 4)}",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  new Text(
+                    memory.tags.substring(0, min(memory.tags.length, 10)),
+                    maxLines: 1,
+                  style: TextStyle(fontSize: 16),
+                  ),
+                ],
+            ),
+            new SizedBox(width: 20),
+            new Flexible(
+              child: new Text(
+                memory.text, maxLines: 3, softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 16),
+              )
+            ),
+          ]
+        )
+    ));
   }
 }
 
@@ -257,7 +270,13 @@ class MemoryDetail extends StatelessWidget {
           ),
         ],
       ),
-      body: new Text(memory.text),
+      body: new Padding(
+        padding: EdgeInsets.all(16),
+        child: new Text(
+          memory.text,
+          style: TextStyle(fontSize: 22),
+        )
+      ),
     );
   }
 
