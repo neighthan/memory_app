@@ -18,7 +18,7 @@ class Memory {
 
   @override
   String toString() {
-    return "idx: $idx, date: $date; tags: $tags; text: $text";
+    return "$date $tags $text";
   }
 
   String serialize() {
@@ -160,6 +160,21 @@ class MemoryStore extends Store {
     final directory = await getApplicationDocumentsDirectory();
     return new File("${directory.path}/memories.csv");
   }
+
+  List<Memory> filteredMemories(String query) {
+    // split the query into words and filter to only memories which contain
+    // each word somewhere (date/tags/text)
+
+    List<String> words = query.split(" ");
+    return new List<Memory>.unmodifiable(
+      _memories.where((memory) {
+        final String memoryString = memory.toString();
+        return words.map((word) => memoryString.contains(word))
+                    .fold(true, (soFar, next) => soFar && next);
+      })
+    );
+  }
+
 }
 
 final StoreToken memoryStoreToken = new StoreToken(new MemoryStore());

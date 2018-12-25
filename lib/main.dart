@@ -24,34 +24,81 @@ class MemoryList extends StatefulWidget {
 
 class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryList>{
   MemoryStore memoryStore;
+  List<Widget> defaultActions;
+  List<Widget> searchActions;
+  List<Widget> currentActions;
+  Text defaultTitle;
+  TextField searchTitle;
+  Widget currentTitle;
+  bool searching = false;
+  List<Memory> filteredMemories = [];
+  final TextEditingController filter = new TextEditingController();
+
+  MemoryListState() {
+    filter.addListener(() {
+      setState(() {
+        filteredMemories = memoryStore.filteredMemories(filter.text);
+      });
+    });
+
+    defaultTitle =  new Text('Memory');
+    defaultActions = [
+      new IconButton(
+        icon: new Icon(Icons.search),
+        onPressed: toggleSearch,
+      ),
+      new IconButton(
+        icon: new Icon(Icons.file_upload),
+        onPressed: importMemories,
+      ),
+      new IconButton(
+        icon: new Icon(Icons.send),
+        onPressed: exportMemories,
+      )
+    ];
+
+    searchTitle = new TextField(
+      controller: filter,
+      style: TextStyle(color: Colors.white, fontSize: 20),
+      cursorColor: Colors.white,
+      decoration: InputDecoration(
+        hintText: "Search...",
+        hintStyle: TextStyle(color: Colors.white30, fontSize: 20),
+        border: InputBorder.none
+      ),
+      autofocus: true,
+    );
+    searchActions = [
+      new IconButton(
+        icon: new Icon(Icons.close),
+        onPressed: toggleSearch,
+      )
+    ];
+
+    currentActions = defaultActions;
+    currentTitle = defaultTitle;
+  }
 
   @override
   void initState() {
     super.initState();
     memoryStore = listenToStore(memoryStoreToken);
-    memoryStore.loadMemories().then((_) => setState(() => {}));
+    memoryStore.loadMemories().then((_) {
+      setState(() => filteredMemories = memoryStore.filteredMemories(filter.text));
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(
-        title: new Text('Memory'),
-        actions: <Widget>[
-          new IconButton(
-            icon: new Icon(Icons.file_upload),
-            onPressed: importMemories,
-          ),
-          new IconButton(
-            icon: new Icon(Icons.send),
-            onPressed: exportMemories,
-          )
-        ],
+        title: currentTitle,
+        actions: currentActions,
       ),
       body: new ListView.builder(
-        itemCount: memoryStore.memories.length,
+        itemCount: filteredMemories.length,
         itemBuilder: (BuildContext context, int idx) {
-          return new MemoryWidget(memoryStore.memories[idx]);
+          return new MemoryWidget(filteredMemories[idx]);
         },
       ),
       floatingActionButton: new FloatingActionButton(
@@ -102,6 +149,21 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
         print(line);
       }
     }
+  }
+
+  toggleSearch() {
+    setState(() {
+      this.searching = !this.searching;
+      this.filter.text = "";
+
+      if (this.searching) {
+        this.currentActions = searchActions;
+        this.currentTitle = searchTitle;
+      } else {
+        this.currentActions = defaultActions;
+        this.currentTitle = defaultTitle;
+      }
+    });
   }
 }
 
@@ -336,7 +398,7 @@ class MemoryDetail extends StatelessWidget {
 }
 
 Widget buildTagWidget(String tag) {
-  final textStyle = TextStyle(color: Colors.white);
+  final textStyle = TextStyle(color: Colors.white70);
   return new Padding(
     padding: EdgeInsets.symmetric(horizontal: 6),
     child: Text(tag, style: textStyle)
