@@ -1,4 +1,5 @@
-name: memory_app
+name: Memory
+version: 2.0.0
 description: A new Flutter project.
 
 dependencies:
@@ -14,6 +15,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: "^0.7.0"
 
 flutter:
   uses-material-design: true
+
+flutter_icons:
+  android: "launcher_icon"
+  image_path: "assets/dendrites.png"
