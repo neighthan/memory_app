@@ -93,22 +93,26 @@ class MemoryStore extends Store {
   MemoryStore() {
     triggerOnAction(addMemoryAction, (Memory memory) {
       _memories.add(memory);
+      _sortAndUpdateIdx();
       saveMemories();
     });
 
     triggerOnAction(updateMemoryAction, (Memory memory) {
       _memories[memory.idx] = memory;
+      _sortAndUpdateIdx();
       saveMemories();
     });
 
     triggerOnAction(deleteMemoryAction, (Memory memory) {
       _memories.removeAt(memory.idx);
+
       if (_memories.isNotEmpty) {
         // fix the indices of all memories after the deleted one
         for (int i = memory.idx; i < _memories.length; i++) {
           _memories[i].idx--;
         }
       }
+
       saveMemories();
     });
   }
@@ -142,6 +146,8 @@ class MemoryStore extends Store {
         // no memories file exists;
       }
     }
+
+    _sortAndUpdateIdx();
     memoriesLoaded = true;
   }
 
@@ -165,16 +171,22 @@ class MemoryStore extends Store {
     // split the query into words and filter to only memories which contain
     // each word somewhere (date/tags/text)
 
-    List<String> words = query.split(" ");
+    List<String> words = query.toLowerCase().split(" ");
     return new List<Memory>.unmodifiable(
       _memories.where((memory) {
-        final String memoryString = memory.toString();
+        final String memoryString = memory.toString().toLowerCase();
         return words.map((word) => memoryString.contains(word))
                     .fold(true, (soFar, next) => soFar && next);
       })
     );
   }
 
+  void _sortAndUpdateIdx() {
+    _memories.sort((mem1, mem2) => mem1.date.compareTo(mem2.date));
+    for (int i = 0; i < _memories.length; i++) {
+      _memories[i].idx = i;
+    }
+  }
 }
 
 final StoreToken memoryStoreToken = new StoreToken(new MemoryStore());
