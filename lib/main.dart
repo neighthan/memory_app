@@ -8,21 +8,27 @@ import 'memory_store.dart';
 void main() => runApp(new MemoryApp());
 
 class MemoryApp extends StatelessWidget {
+  final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
       title: 'Memory',
-      home: new MemoryList(),
+      home: new MemoryList(routeObserver),
+      navigatorObservers: [routeObserver],
     );
   }
 }
 
 class MemoryList extends StatefulWidget {
+  MemoryList(this.routeObserver);
+  final RouteObserver<PageRoute> routeObserver;
+
   @override
-  MemoryListState createState() => new MemoryListState();
+  MemoryListState createState() => new MemoryListState(routeObserver);
 }
 
-class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryList>{
+class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryList>, RouteAware{
   MemoryStore memoryStore;
   List<Widget> defaultActions;
   List<Widget> searchActions;
@@ -33,8 +39,9 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
   bool searching = false;
   List<Memory> filteredMemories = [];
   final TextEditingController filter = new TextEditingController();
+  final RouteObserver<PageRoute> routeObserver;
 
-  MemoryListState() {
+  MemoryListState(this.routeObserver) {
     filter.addListener(() {
       setState(() {
         filteredMemories = memoryStore.filteredMemories(filter.text);
@@ -49,7 +56,7 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
       ),
       new IconButton(
         icon: new Icon(Icons.file_upload),
-        onPressed: importMemories,
+        onPressed: () => importMemories().then((_) => setState(() {})),
       ),
       new IconButton(
         icon: new Icon(Icons.send),
@@ -121,6 +128,27 @@ class MemoryListState extends State<MemoryList> with StoreWatcherMixin<MemoryLis
         }
       )
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context));
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // because adding a memory is async; not sure of a better way to do this
+    // there's probably a better way I should be using flux so that this wouldn't be necessary...
+    Future.delayed(Duration(milliseconds: 25), () {
+      setState(() => filteredMemories = memoryStore.filteredMemories(filter.text));
+    });
   }
 
   importMemories() async {
@@ -231,6 +259,7 @@ class AddEditMemoryState extends State<AddEditMemory> with StoreWatcherMixin<Add
     dateController = new TextEditingController(),
     tagsController = new TextEditingController(),
     textController = new TextEditingController();
+
   final String addOrEdit;
   final int memoryIdx;
   final TextEditingController dateController;
@@ -322,7 +351,7 @@ class MemoryDetail extends StatelessWidget {
 
   MemoryDetail(this.memory)
     : timeFormat = Memory.formatDateTime(memory.date),
-      splitTags = memory.tags.split(",");
+      splitTags = memory.tags.split(", ");
 
   @override
   Widget build(BuildContext context) {
@@ -353,9 +382,11 @@ class MemoryDetail extends StatelessWidget {
       ),
       body: new Padding(
         padding: EdgeInsets.all(16),
-        child: new Text(
-          memory.text,
-          style: TextStyle(fontSize: 22),
+        child: new SingleChildScrollView(
+          child: new Text(
+            memory.text,
+            style: TextStyle(fontSize: 22),
+          )
         )
       ),
     );
